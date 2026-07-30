@@ -1,0 +1,246 @@
+---
+import AppShell from "../../layouts/AppShell.astro";
+import { PRS, GEWICHT_VERLOOP } from "../../data/demo";
+
+const eersteGewicht = GEWICHT_VERLOOP[0]!.kg;
+const laatsteGewicht = GEWICHT_VERLOOP[GEWICHT_VERLOOP.length - 1]!.kg;
+const gewichtDelta = Math.round((laatsteGewicht - eersteGewicht) * 10) / 10;
+---
+
+<AppShell title="Voortgang | BASE app" paginaTitel="Voortgang" rol="lid">
+  <section class="rise-in">
+    <h2 class="display text-2xl font-extrabold">Jouw voortgang</h2>
+    <p class="mt-1 text-sm text-white/50">De laatste 8 weken. Daan kijkt met je mee en stuurt je schema hierop bij.</p>
+  </section>
+
+  <!-- Krachtverloop -->
+  <section class="rise-in rise-in-1 mt-5 rounded-3xl border border-white/8 bg-coal-800 p-5 lg:p-6">
+    <div class="flex items-center justify-between gap-3">
+      <h3 class="display text-sm font-semibold text-white/85">Krachtverloop</h3>
+      <span id="kracht-delta" class="rounded-full bg-volt/10 px-3 py-1 text-xs font-semibold text-volt"></span>
+    </div>
+    <div class="mt-3 flex gap-2" id="kracht-keuze"></div>
+    <div class="relative mt-4" id="kracht-grafiek"></div>
+  </section>
+
+  <!-- Lichaamsgewicht -->
+  <section class="rise-in rise-in-2 mt-5 rounded-3xl border border-white/8 bg-coal-800 p-5 lg:p-6">
+    <div class="flex items-center justify-between gap-3">
+      <h3 class="display text-sm font-semibold text-white/85">Lichaamsgewicht</h3>
+      <span class="rounded-full bg-volt/10 px-3 py-1 text-xs font-semibold text-volt">{gewichtDelta > 0 ? `+${gewichtDelta}` : gewichtDelta} kg in 8 weken</span>
+    </div>
+    <div class="relative mt-4" id="gewicht-grafiek"></div>
+  </section>
+
+  <!-- PR's -->
+  <section class="rise-in rise-in-3 mt-5">
+    <h3 class="display text-sm font-semibold text-white/85">Persoonlijke records</h3>
+    <div class="mt-3 grid grid-cols-2 gap-3">
+      {
+        PRS.map((pr) => (
+          <div class="rounded-2xl border border-white/8 bg-coal-800 p-4">
+            <p class="text-xs text-white/50">{pr.oefening}</p>
+            <p class="display mt-1 text-2xl font-extrabold">
+              {pr.kg}
+              <span class="text-sm font-semibold text-white/40"> {"eenheid" in pr ? pr.eenheid : "kg"}</span>
+            </p>
+            <p class="mt-1 text-[11px] text-white/40">{pr.datum}</p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <script>
+    import { KRACHT_VERLOOP, GEWICHT_VERLOOP } from "../../data/demo";
+
+    type Punt = { datum: string; kg: number };
+
+    const VOLT = "#d6fb00";
+
+    function kortLabel(iso: string): string {
+      return new Date(iso + "T12:00:00").toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
+    }
+
+    // Compacte lijngrafiek: 2px lijn, 8px punten, rustig grid, tooltip bij aanwijzen.
+    function lijnGrafiek(container: HTMLElement, punten: Punt[], eenheid: string): void {
+      container.innerHTML = "";
+      const W = 640;
+      const H = 240;
+      const pad = { l: 42, r: 18, t: 18, b: 30 };
+
+      const waarden = punten.map((p) => p.kg);
+      const min = Math.min(...waarden);
+      const max = Math.max(...waarden);
+      const marge = Math.max((max - min) * 0.25, 1);
+      const y0 = min - marge;
+      const y1 = max + marge;
+
+      const x = (i: number) => pad.l + (i / (punten.length - 1)) * (W - pad.l - pad.r);
+      const y = (v: number) => pad.t + (1 - (v - y0) / (y1 - y0)) * (H - pad.t - pad.b);
+
+      const svgNs = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(svgNs, "svg");
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      svg.setAttribute("class", "w-full");
+      svg.setAttribute("role", "img");
+
+      // Grid: 3 horizontale lijnen + y-labels
+      for (let g = 0; g < 3; g++) {
+        const v = y0 + ((g + 0.5) / 3) * (y1 - y0);
+        const lijn = document.createElementNS(svgNs, "line");
+        lijn.setAttribute("x1", String(pad.l));
+        lijn.setAttribute("x2", String(W - pad.r));
+        lijn.setAttribute("y1", String(y(v)));
+        lijn.setAttribute("y2", String(y(v)));
+        lijn.setAttribute("stroke", "rgba(255,255,255,0.07)");
+        svg.appendChild(lijn);
+        const label = document.createElementNS(svgNs, "text");
+        label.setAttribute("x", String(pad.l - 8));
+        label.setAttribute("y", String(y(v) + 3.5));
+        label.setAttribute("text-anchor", "end");
+        label.setAttribute("class", "fill-white/40");
+        label.setAttribute("font-size", "11");
+        label.textContent = String(Math.round(v * 10) / 10);
+        svg.appendChild(label);
+      }
+
+      // X-labels: eerste, midden, laatste
+      [0, Math.floor((punten.length - 1) / 2), punten.length - 1].forEach((i) => {
+        const label = document.createElementNS(svgNs, "text");
+        label.setAttribute("x", String(x(i)));
+        label.setAttribute("y", String(H - 8));
+        label.setAttribute("text-anchor", i === 0 ? "start" : i === punten.length - 1 ? "end" : "middle");
+        label.setAttribute("class", "fill-white/40");
+        label.setAttribute("font-size", "11");
+        label.textContent = kortLabel(punten[i]!.datum);
+        svg.appendChild(label);
+      });
+
+      // Vlak onder de lijn
+      const defs = document.createElementNS(svgNs, "defs");
+      const gradId = `grad-${container.id}`;
+      defs.innerHTML = `<linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${VOLT}" stop-opacity="0.22"/><stop offset="1" stop-color="${VOLT}" stop-opacity="0"/></linearGradient>`;
+      svg.appendChild(defs);
+
+      const vlakPad = punten.map((p, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(p.kg)}`).join(" ");
+      const vlak = document.createElementNS(svgNs, "path");
+      vlak.setAttribute("d", `${vlakPad} L${x(punten.length - 1)},${H - pad.b} L${x(0)},${H - pad.b} Z`);
+      vlak.setAttribute("fill", `url(#${gradId})`);
+      svg.appendChild(vlak);
+
+      const lijnPad = punten.map((p, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(p.kg)}`).join(" ");
+      const lijn = document.createElementNS(svgNs, "path");
+      lijn.setAttribute("d", lijnPad);
+      lijn.setAttribute("fill", "none");
+      lijn.setAttribute("stroke", VOLT);
+      lijn.setAttribute("stroke-width", "2");
+      lijn.setAttribute("stroke-linecap", "round");
+      lijn.setAttribute("stroke-linejoin", "round");
+      svg.appendChild(lijn);
+
+      // Punten: open, laatste gevuld met direct label
+      punten.forEach((p, i) => {
+        const dot = document.createElementNS(svgNs, "circle");
+        dot.setAttribute("cx", String(x(i)));
+        dot.setAttribute("cy", String(y(p.kg)));
+        dot.setAttribute("r", "4");
+        dot.setAttribute("fill", i === punten.length - 1 ? VOLT : "#161616");
+        dot.setAttribute("stroke", VOLT);
+        dot.setAttribute("stroke-width", "2");
+        svg.appendChild(dot);
+      });
+      const laatste = punten[punten.length - 1]!;
+      const eindLabel = document.createElementNS(svgNs, "text");
+      eindLabel.setAttribute("x", String(x(punten.length - 1)));
+      eindLabel.setAttribute("y", String(y(laatste.kg) - 12));
+      eindLabel.setAttribute("text-anchor", "end");
+      eindLabel.setAttribute("class", "fill-white");
+      eindLabel.setAttribute("font-size", "13");
+      eindLabel.setAttribute("font-weight", "600");
+      eindLabel.textContent = `${laatste.kg} ${eenheid}`;
+      svg.appendChild(eindLabel);
+
+      container.appendChild(svg);
+
+      // Tooltip + crosshair
+      const tip = document.createElement("div");
+      tip.className = "pointer-events-none absolute z-10 hidden rounded-lg border border-white/10 bg-coal-950/95 px-3 py-1.5 text-xs shadow-xl";
+      container.appendChild(tip);
+      const kruis = document.createElementNS(svgNs, "line");
+      kruis.setAttribute("stroke", "rgba(255,255,255,0.25)");
+      kruis.setAttribute("stroke-dasharray", "3 3");
+      kruis.setAttribute("y1", String(pad.t));
+      kruis.setAttribute("y2", String(H - pad.b));
+      kruis.setAttribute("visibility", "hidden");
+      svg.appendChild(kruis);
+
+      const beweeg = (clientX: number) => {
+        const rect = svg.getBoundingClientRect();
+        const sx = ((clientX - rect.left) / rect.width) * W;
+        let idx = Math.round(((sx - pad.l) / (W - pad.l - pad.r)) * (punten.length - 1));
+        idx = Math.max(0, Math.min(punten.length - 1, idx));
+        const p = punten[idx]!;
+        kruis.setAttribute("x1", String(x(idx)));
+        kruis.setAttribute("x2", String(x(idx)));
+        kruis.setAttribute("visibility", "visible");
+        tip.innerHTML = `<span class="text-white/50">${kortLabel(p.datum)}</span> <span class="font-semibold">${p.kg} ${eenheid}</span>`;
+        tip.classList.remove("hidden");
+        const tx = (x(idx) / W) * rect.width;
+        tip.style.left = `${Math.min(rect.width - 110, Math.max(4, tx - 40))}px`;
+        tip.style.top = `${(y(p.kg) / H) * rect.height - 38}px`;
+      };
+      svg.addEventListener("mousemove", (e) => beweeg(e.clientX));
+      svg.addEventListener("touchstart", (e) => beweeg(e.touches[0]!.clientX), { passive: true });
+      svg.addEventListener("touchmove", (e) => beweeg(e.touches[0]!.clientX), { passive: true });
+      svg.addEventListener("mouseleave", () => {
+        tip.classList.add("hidden");
+        kruis.setAttribute("visibility", "hidden");
+      });
+
+      // Toegankelijke tabelweergave
+      const tabel = document.createElement("table");
+      tabel.className = "sr-only";
+      tabel.innerHTML =
+        `<caption>Verloop in ${eenheid}</caption>` +
+        `<tr><th scope="col">Datum</th><th scope="col">Waarde</th></tr>` +
+        punten.map((p) => `<tr><td>${kortLabel(p.datum)}</td><td>${p.kg} ${eenheid}</td></tr>`).join("");
+      container.appendChild(tabel);
+    }
+
+    // Krachtgrafiek met keuzeknoppen
+    const keuzeEl = document.getElementById("kracht-keuze")!;
+    const krachtEl = document.getElementById("kracht-grafiek")!;
+    const deltaEl = document.getElementById("kracht-delta")!;
+    const sleutels = Object.keys(KRACHT_VERLOOP);
+    let actief = sleutels[0]!;
+
+    function toonKracht(): void {
+      const data = KRACHT_VERLOOP[actief]!;
+      lijnGrafiek(krachtEl, data.punten, "kg");
+      const eerste = data.punten[0]!.kg;
+      const laatste = data.punten[data.punten.length - 1]!.kg;
+      deltaEl.textContent = `+${Math.round((laatste - eerste) * 10) / 10} kg in 8 weken`;
+      [...keuzeEl.children].forEach((kind) => {
+        const knop = kind as HTMLButtonElement;
+        const aan = knop.dataset.sleutel === actief;
+        knop.className = `rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${aan ? "bg-volt text-coal-950" : "bg-coal-950 text-white/60 border border-white/10 hover:text-white"}`;
+      });
+    }
+
+    sleutels.forEach((sleutel) => {
+      const knop = document.createElement("button");
+      knop.type = "button";
+      knop.dataset.sleutel = sleutel;
+      knop.textContent = KRACHT_VERLOOP[sleutel]!.naam;
+      knop.addEventListener("click", () => {
+        actief = sleutel;
+        toonKracht();
+      });
+      keuzeEl.appendChild(knop);
+    });
+    toonKracht();
+
+    lijnGrafiek(document.getElementById("gewicht-grafiek")!, GEWICHT_VERLOOP, "kg");
+  </script>
+</AppShell>

@@ -1,0 +1,138 @@
+---
+import AppShell from "../../layouts/AppShell.astro";
+import { LID, SCHEMA, trainingVanVandaag, volgendeTraining, AFSPRAKEN, langNL, hoofdletter } from "../../data/demo";
+
+const vandaag = trainingVanVandaag();
+const volgende = volgendeTraining();
+const eerstvolgendeAfspraak = AFSPRAKEN[0];
+const afspraakDatum = eerstvolgendeAfspraak ? hoofdletter(langNL(new Date(eerstvolgendeAfspraak.datum))) : "";
+---
+
+<AppShell title="Vandaag | BASE app" paginaTitel="Vandaag" rol="lid">
+  <section class="rise-in">
+    <p class="text-sm text-white/50" id="datum-regel"></p>
+    <h2 class="display mt-1 text-3xl font-extrabold leading-tight"><span id="groet">Hallo</span>, {LID.voornaam}</h2>
+  </section>
+
+  {
+    vandaag ? (
+      <a href="/app/training/" class="rise-in rise-in-1 group relative mt-6 block overflow-hidden rounded-3xl border border-white/10" id="training-kaart">
+        <img src="/img/personal-training.jpg" alt="" class="absolute inset-0 h-full w-full object-cover opacity-30 transition-transform duration-700 group-hover:scale-105" />
+        <div class="absolute inset-0 bg-gradient-to-r from-coal-950/85 via-coal-950/60 to-coal-950/30" />
+        <div class="relative p-6">
+          <div class="flex items-center gap-2">
+            <span class="rounded-full bg-volt px-3 py-1 font-display text-[11px] font-bold uppercase tracking-wide text-coal-950">Vandaag</span>
+            <span class="text-xs text-white/60">{vandaag.label} - {vandaag.duurMin} min</span>
+          </div>
+          <h3 class="display mt-3 text-2xl font-bold leading-tight">{vandaag.naam}</h3>
+          <p class="mt-1 text-sm text-white/60">{vandaag.oefeningen.length} oefeningen - Week {SCHEMA.week} van {SCHEMA.totaalWeken}</p>
+          <span class="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-coal-950 transition-colors group-hover:bg-volt" id="training-cta">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="size-4"><path d="M8 5.5v13l11-6.5z" /></svg>
+            Start training
+          </span>
+        </div>
+      </a>
+    ) : (
+      <div class="rise-in rise-in-1 mt-6 rounded-3xl border border-white/10 bg-coal-800 p-6">
+        <span class="rounded-full bg-white/10 px-3 py-1 font-display text-[11px] font-bold uppercase tracking-wide text-white/70">Rustdag</span>
+        <h3 class="display mt-3 text-2xl font-bold">Herstel is ook trainen</h3>
+        <p class="mt-1 text-sm text-white/60">
+          Volgende training: {volgende.dag.naam}, over {volgende.overDagen} {volgende.overDagen === 1 ? "dag" : "dagen"}.
+        </p>
+        <a href="/app/training/" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-white/15">Bekijk je schema</a>
+      </div>
+    )
+  }
+
+  <section class="rise-in rise-in-2 mt-5 grid grid-cols-2 gap-3">
+    <div class="rounded-2xl border border-white/8 bg-coal-800 p-4">
+      <p class="text-xs text-white/45">Deze week</p>
+      <p class="display mt-1 text-2xl font-bold"><span id="stat-week">1</span><span class="text-white/40 text-lg"> van 3</span></p>
+      <p class="text-xs text-white/45">trainingen gedaan</p>
+    </div>
+    <div class="rounded-2xl border border-white/8 bg-coal-800 p-4">
+      <p class="text-xs text-white/45">Op rij</p>
+      <p class="display mt-1 text-2xl font-bold text-volt">6 weken</p>
+      <p class="text-xs text-white/45">alles volgens plan</p>
+    </div>
+  </section>
+
+  <section class="rise-in rise-in-3 mt-5 rounded-2xl border border-white/8 bg-coal-800 p-5">
+    <div class="flex items-center justify-between">
+      <h3 class="display text-sm font-semibold text-white/85">Eerstvolgende afspraak</h3>
+      <a href="/app/afspraken/" class="text-xs font-medium text-volt">Alle afspraken</a>
+    </div>
+    <div class="mt-4 flex items-center gap-4">
+      <div class="grid size-12 shrink-0 place-items-center rounded-xl bg-volt/10 text-volt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-6"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></svg>
+      </div>
+      <div class="min-w-0">
+        <p class="truncate text-sm font-semibold">{eerstvolgendeAfspraak.type} met {eerstvolgendeAfspraak.met}</p>
+        <p class="text-xs text-white/50">{afspraakDatum} - {eerstvolgendeAfspraak.tijd} uur</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="rise-in rise-in-4 mt-5 grid grid-cols-2 gap-3">
+    <a href="/app/toegang/" class="flex flex-col justify-between rounded-2xl border border-volt/25 bg-volt/8 p-4 transition-colors hover:bg-volt/15">
+      <div class="grid size-10 place-items-center rounded-xl bg-volt text-coal-950">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" class="size-5"><rect x="4" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.2"/><path d="M13.5 13.5h2.8v2.8h-2.8zM17.2 17.2h2.8V20h-2.8zM17.2 13.5H20M13.5 17.2v2.8"/></svg>
+      </div>
+      <div class="mt-3">
+        <p class="display text-sm font-bold">Toegangscode</p>
+        <p class="text-xs text-white/55">24/7 open met jouw QR</p>
+      </div>
+    </a>
+    <a href="/app/voeding/" class="flex flex-col justify-between rounded-2xl border border-white/8 bg-coal-800 p-4 transition-colors hover:border-white/20">
+      <div class="grid size-10 place-items-center rounded-xl bg-white/8 text-volt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M12 8.5c1-2.8 3.2-4 5.2-3.4 2.5.7 3.6 3.6 2.4 6.8-1.3 3.6-4.3 6.6-7.6 8.1-3.3-1.5-6.3-4.5-7.6-8.1-1.2-3.2-.1-6.1 2.4-6.8 2-.6 4.2.6 5.2 3.4z"/><path d="M12 8.5V6"/></svg>
+      </div>
+      <div class="mt-3">
+        <p class="display text-sm font-bold">Voeding</p>
+        <p class="text-xs text-white/55">Jouw plan van vandaag</p>
+      </div>
+    </a>
+  </section>
+
+  <a href="/app/community/" class="rise-in rise-in-4 mt-3 flex items-center justify-between rounded-2xl border border-white/8 bg-coal-800 p-5 transition-colors hover:border-volt/30">
+    <div class="flex items-center gap-4">
+      <div class="grid size-12 shrink-0 place-items-center rounded-xl bg-white/8 text-volt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-6"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.5" r="2.5"/><path d="M15.6 14.7c2.6.1 4.4 1.8 4.9 4.3"/></svg>
+      </div>
+      <div class="min-w-0">
+        <p class="display text-sm font-bold">Community</p>
+        <p class="text-xs text-white/55">1 buddyverzoek en een nieuwe challenge</p>
+      </div>
+    </div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-volt"><path d="M9 6l6 6-6 6"/></svg>
+  </a>
+
+  <p class="mt-10 text-center text-[11px] text-white/25 lg:hidden">Made By <span class="agensea-glow font-semibold">Agensea</span></p>
+
+  <script>
+    import { loadState, dateKey } from "../../scripts/store";
+    import { trainingVanVandaag } from "../../data/demo";
+
+    const nu = new Date();
+    const uur = nu.getHours();
+    const groet = uur < 12 ? "Goedemorgen" : uur < 18 ? "Goedemiddag" : "Goedenavond";
+    document.getElementById("groet")!.textContent = groet;
+    const datum = nu.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
+    document.getElementById("datum-regel")!.textContent = datum.charAt(0).toUpperCase() + datum.slice(1);
+
+    // Afgeronde training vandaag terug laten komen in de kaart en weekteller.
+    const state = loadState();
+    const afgerond = state.trainingenAfgerond?.[dateKey()];
+    const dag = trainingVanVandaag();
+    if (afgerond && dag) {
+      const cta = document.getElementById("training-cta");
+      if (cta) {
+        cta.className = "mt-5 inline-flex items-center gap-2 rounded-xl bg-volt px-4 py-2.5 text-sm font-semibold text-coal-950";
+        cta.innerHTML =
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="size-4"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg> Afgerond, goed bezig';
+      }
+      const stat = document.getElementById("stat-week");
+      if (stat) stat.textContent = "2";
+    }
+  </script>
+</AppShell>

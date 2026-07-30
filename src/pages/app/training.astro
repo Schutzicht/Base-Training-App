@@ -1,0 +1,318 @@
+---
+import AppShell from "../../layouts/AppShell.astro";
+import { SCHEMA, trainingVanVandaag, volgendeTraining } from "../../data/demo";
+
+const vandaag = trainingVanVandaag();
+const actieveDag = vandaag?.id ?? volgendeTraining().dag.id;
+---
+
+<AppShell title="Training | BASE app" paginaTitel="Training" rol="lid">
+  <section class="rise-in flex items-end justify-between gap-4">
+    <div>
+      <p class="text-xs uppercase tracking-[0.18em] text-volt font-display font-medium">{SCHEMA.blok}</p>
+      <h2 class="display mt-1 text-2xl font-extrabold">{SCHEMA.naam}</h2>
+      <p class="mt-1 text-sm text-white/50">Week {SCHEMA.week} van {SCHEMA.totaalWeken} - opgesteld door Daan</p>
+    </div>
+    <div class="hidden sm:block text-right">
+      <p class="display text-2xl font-bold text-volt" id="voortgang-label">0%</p>
+      <p class="text-xs text-white/45">van vandaag</p>
+    </div>
+  </section>
+
+  <div class="rise-in rise-in-1 mt-4 h-1.5 overflow-hidden rounded-full bg-white/8">
+    <div id="voortgang-balk" class="h-full w-0 rounded-full bg-volt transition-all duration-500"></div>
+  </div>
+
+  {!vandaag && (
+    <p class="mt-4 rounded-xl border border-white/10 bg-coal-800 px-4 py-3 text-sm text-white/60">
+      Vandaag staat er geen training gepland. Bekijk alvast je volgende trainingsdag.
+    </p>
+  )}
+
+  <div class="rise-in rise-in-1 mt-5 flex gap-2 overflow-x-auto no-scrollbar">
+    {
+      SCHEMA.dagen.map((dag) => (
+        <button
+          type="button"
+          data-dagknop={dag.id}
+          class:list={[
+            "dagknop shrink-0 rounded-xl px-4 py-2.5 text-left transition-colors border",
+            dag.id === actieveDag ? "bg-volt text-coal-950 border-volt" : "bg-coal-800 text-white/70 border-white/8",
+          ]}
+        >
+          <span class="display block text-sm font-bold">{dag.label}</span>
+          <span class="block text-[11px] opacity-70">{dag.naam}</span>
+        </button>
+      ))
+    }
+  </div>
+
+  {
+    SCHEMA.dagen.map((dag) => (
+      <section data-dagsectie={dag.id} class:list={["mt-5 flex-col gap-3", dag.id === actieveDag ? "flex" : "hidden"]}>
+        {dag.oefeningen.map((oef) => (
+          <article
+            class="oefening-kaart rounded-2xl border border-white/8 bg-coal-800 p-5"
+            data-dag={dag.id}
+            data-oef={oef.id}
+            data-sets={oef.sets}
+            data-reps={oef.reps}
+            data-gewicht={oef.gewicht ?? ""}
+            data-rust={oef.rustSec}
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="display text-base font-bold">{oef.naam}</h3>
+                <p class="mt-0.5 text-xs text-white/45">
+                  {oef.spiergroep} - <span data-veld="setsreps">{oef.sets} x {oef.reps}</span> - rust {Math.floor(oef.rustSec / 60) > 0 ? `${Math.floor(oef.rustSec / 60)}:${String(oef.rustSec % 60).padStart(2, "0")}` : `${oef.rustSec} sec`}
+                </p>
+              </div>
+              <div data-veld="gewichtblok" class:list={[oef.gewicht === null && "hidden"]}>
+                <div class="flex items-center gap-1 rounded-xl bg-coal-950 border border-white/10 p-1">
+                  <button type="button" data-actie="gewicht-min" class="grid size-8 place-items-center rounded-lg text-white/60 hover:bg-white/8" aria-label="Gewicht omlaag">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" class="size-4"><path d="M6 12h12" /></svg>
+                  </button>
+                  <span class="display min-w-14 text-center text-sm font-bold" data-veld="gewicht">{oef.gewicht} kg</span>
+                  <button type="button" data-actie="gewicht-plus" class="grid size-8 place-items-center rounded-lg text-white/60 hover:bg-white/8" aria-label="Gewicht omhoog">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" class="size-4"><path d="M12 6v12M6 12h12" /></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            {oef.cue && <p class="mt-2 text-xs text-white/40">Tip: {oef.cue}</p>}
+            <div class="mt-4 flex flex-wrap gap-2" data-veld="sets" />
+          </article>
+        ))}
+
+        <button
+          type="button"
+          data-actie="afronden"
+          data-dag={dag.id}
+          class="mt-2 w-full rounded-2xl bg-volt py-4 font-display text-base font-bold uppercase tracking-wide text-coal-950 transition-transform active:scale-[0.99] disabled:opacity-40"
+        >
+          Training afronden
+        </button>
+      </section>
+    ))
+  }
+
+  <!-- Rusttimer -->
+  <div id="rust-timer" class="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-5 opacity-0 transition-all duration-300 translate-y-4 lg:bottom-8">
+    <div class="pointer-events-auto flex items-center gap-4 rounded-2xl border border-volt/30 bg-coal-900/95 px-5 py-3.5 backdrop-blur-xl volt-glow">
+      <div>
+        <p class="text-[11px] uppercase tracking-wide text-white/50 font-medium">Rust</p>
+        <p class="display text-2xl font-bold tabular-nums text-volt" id="rust-tijd">1:30</p>
+      </div>
+      <button type="button" id="rust-skip" class="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/15">Klaar</button>
+    </div>
+  </div>
+
+  <!-- Afgerond overlay -->
+  <div id="klaar-overlay" class="fixed inset-0 z-[60] hidden items-center justify-center bg-coal-950/90 backdrop-blur-sm px-6">
+    <div class="w-full max-w-sm rounded-3xl border border-volt/25 bg-coal-900 p-8 text-center volt-glow">
+      <div class="mx-auto grid size-16 place-items-center rounded-full bg-volt text-coal-950">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="size-8"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </div>
+      <h3 class="display mt-5 text-2xl font-extrabold">Training afgerond</h3>
+      <p class="mt-2 text-sm text-white/60" id="klaar-tekst">Sterk gedaan. Je voortgang is opgeslagen en Daan kan meekijken.</p>
+      <a href="/app/" class="mt-6 block rounded-xl bg-volt py-3 font-semibold text-coal-950">Terug naar vandaag</a>
+    </div>
+  </div>
+
+  <script>
+    import { loadState, patchState, dateKey } from "../../scripts/store";
+
+    const state = loadState();
+    const vandaagKey = dateKey();
+
+    function setSleutel(dag: string, oef: string): string {
+      return `${vandaagKey}:${dag}:${oef}`;
+    }
+
+    // Dag wisselen
+    const dagKnoppen = document.querySelectorAll<HTMLButtonElement>("[data-dagknop]");
+    dagKnoppen.forEach((knop) => {
+      knop.addEventListener("click", () => {
+        const id = knop.dataset.dagknop!;
+        dagKnoppen.forEach((k) => {
+          const actief = k.dataset.dagknop === id;
+          k.className = `dagknop shrink-0 rounded-xl px-4 py-2.5 text-left transition-colors border ${actief ? "bg-volt text-coal-950 border-volt" : "bg-coal-800 text-white/70 border-white/8"}`;
+        });
+        document.querySelectorAll<HTMLElement>("[data-dagsectie]").forEach((s) => {
+          const actief = s.dataset.dagsectie === id;
+          s.classList.toggle("flex", actief);
+          s.classList.toggle("hidden", !actief);
+        });
+        werkVoortgangBij();
+      });
+    });
+
+    // Rusttimer
+    const timerEl = document.getElementById("rust-timer")!;
+    const tijdEl = document.getElementById("rust-tijd")!;
+    let timerId: ReturnType<typeof setInterval> | null = null;
+
+    function startRust(sec: number): void {
+      if (timerId) clearInterval(timerId);
+      let rest = sec;
+      const toon = () => {
+        tijdEl.textContent = `${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, "0")}`;
+      };
+      toon();
+      timerEl.classList.remove("opacity-0", "translate-y-4");
+      timerId = setInterval(() => {
+        rest -= 1;
+        toon();
+        if (rest <= 0) {
+          stopRust();
+          navigator.vibrate?.(200);
+        }
+      }, 1000);
+    }
+
+    function stopRust(): void {
+      if (timerId) clearInterval(timerId);
+      timerId = null;
+      timerEl.classList.add("opacity-0", "translate-y-4");
+    }
+
+    document.getElementById("rust-skip")!.addEventListener("click", stopRust);
+
+    // Oefeningkaarten opbouwen: overrides van de trainer + set-chips + gewichten
+    const kaarten = document.querySelectorAll<HTMLElement>(".oefening-kaart");
+
+    function chipKlasse(done: boolean): string {
+      return `set-chip grid size-11 place-items-center rounded-xl border font-display text-sm font-bold transition-all ${
+        done ? "bg-volt text-coal-950 border-volt" : "bg-coal-950 text-white/60 border-white/12 hover:border-white/30"
+      }`;
+    }
+
+    kaarten.forEach((kaart) => {
+      const dag = kaart.dataset.dag!;
+      const oef = kaart.dataset.oef!;
+      const override = state.schemaOverrides?.[`${dag}:${oef}`];
+      const sets = override?.sets ?? Number(kaart.dataset.sets);
+      const reps = override?.reps ?? kaart.dataset.reps!;
+      const basisGewicht = override?.gewicht ?? (kaart.dataset.gewicht ? Number(kaart.dataset.gewicht) : null);
+      const rust = Number(kaart.dataset.rust);
+
+      kaart.dataset.sets = String(sets);
+      const setsRepsEl = kaart.querySelector('[data-veld="setsreps"]');
+      if (setsRepsEl) setsRepsEl.textContent = `${sets} x ${reps}`;
+
+      // Gewicht
+      let gewicht = basisGewicht !== null ? (state.gewichten?.[oef] ?? basisGewicht) : null;
+      const gewichtEl = kaart.querySelector<HTMLElement>('[data-veld="gewicht"]');
+      const toonGewicht = () => {
+        if (gewichtEl && gewicht !== null) gewichtEl.textContent = `${gewicht} kg`;
+      };
+      toonGewicht();
+      kaart.querySelector('[data-actie="gewicht-min"]')?.addEventListener("click", () => {
+        if (gewicht === null) return;
+        gewicht = Math.max(0, Math.round((gewicht - 2.5) * 10) / 10);
+        toonGewicht();
+        patchState((s) => {
+          s.gewichten = { ...(s.gewichten ?? {}), [oef]: gewicht as number };
+        });
+      });
+      kaart.querySelector('[data-actie="gewicht-plus"]')?.addEventListener("click", () => {
+        if (gewicht === null) return;
+        gewicht = Math.round((gewicht + 2.5) * 10) / 10;
+        toonGewicht();
+        patchState((s) => {
+          s.gewichten = { ...(s.gewichten ?? {}), [oef]: gewicht as number };
+        });
+      });
+
+      // Set-chips
+      const setsEl = kaart.querySelector<HTMLElement>('[data-veld="sets"]')!;
+      const done: boolean[] = state.setsDone?.[setSleutel(dag, oef)] ?? Array(sets).fill(false);
+      for (let i = 0; i < sets; i++) {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = chipKlasse(done[i] ?? false);
+        chip.textContent = String(i + 1);
+        chip.setAttribute("aria-label", `Set ${i + 1} afvinken`);
+        chip.addEventListener("click", () => {
+          done[i] = !done[i];
+          chip.className = chipKlasse(done[i]!);
+          patchState((s) => {
+            s.setsDone = { ...(s.setsDone ?? {}), [setSleutel(dag, oef)]: done };
+          });
+          if (done[i]) startRust(rust);
+          werkVoortgangBij();
+        });
+        setsEl.appendChild(chip);
+      }
+    });
+
+    // Door de trainer toegevoegde oefeningen (uit de schema-editor op de trainerskant)
+    const toevoegingen = state.schemaToevoegingen ?? {};
+    document.querySelectorAll<HTMLElement>("[data-dagsectie]").forEach((sectie) => {
+      const dag = sectie.dataset.dagsectie!;
+      const afrondKnop = sectie.querySelector('[data-actie="afronden"]');
+      (toevoegingen[dag] ?? []).forEach((naam, i) => {
+        const kaart = document.createElement("article");
+        kaart.className = "rounded-2xl border border-volt/20 bg-coal-800 p-5";
+        kaart.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="display text-base font-bold">${naam}</h3>
+              <p class="mt-0.5 text-xs text-white/45">3 x 10 - rust 1:30</p>
+            </div>
+            <span class="rounded-full bg-volt/10 px-2.5 py-1 text-[11px] font-semibold text-volt">Nieuw van Daan</span>
+          </div>
+          <div class="mt-4 flex flex-wrap gap-2" data-veld="sets"></div>`;
+        const setsEl = kaart.querySelector<HTMLElement>('[data-veld="sets"]')!;
+        const sleutel = setSleutel(dag, `extra-${i}`);
+        const done: boolean[] = state.setsDone?.[sleutel] ?? Array(3).fill(false);
+        for (let s = 0; s < 3; s++) {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = chipKlasse(done[s] ?? false);
+          chip.textContent = String(s + 1);
+          chip.setAttribute("aria-label", `Set ${s + 1} afvinken`);
+          chip.addEventListener("click", () => {
+            done[s] = !done[s];
+            chip.className = chipKlasse(done[s]!);
+            patchState((st) => {
+              st.setsDone = { ...(st.setsDone ?? {}), [sleutel]: done };
+            });
+            if (done[s]) startRust(90);
+            werkVoortgangBij();
+          });
+          setsEl.appendChild(chip);
+        }
+        sectie.insertBefore(kaart, afrondKnop);
+      });
+    });
+
+    // Voortgang van de zichtbare dag
+    const voortgangBalk = document.getElementById("voortgang-balk")!;
+    const voortgangLabel = document.getElementById("voortgang-label");
+
+    function werkVoortgangBij(): void {
+      const sectie = document.querySelector<HTMLElement>("[data-dagsectie].flex") ?? document.querySelector<HTMLElement>("[data-dagsectie]:not(.hidden)");
+      if (!sectie) return;
+      const chips = sectie.querySelectorAll(".set-chip");
+      const klaar = sectie.querySelectorAll(".set-chip.bg-volt").length;
+      const pct = chips.length ? Math.round((klaar / chips.length) * 100) : 0;
+      voortgangBalk.style.width = `${pct}%`;
+      if (voortgangLabel) voortgangLabel.textContent = `${pct}%`;
+    }
+    werkVoortgangBij();
+
+    // Afronden
+    document.querySelectorAll<HTMLButtonElement>('[data-actie="afronden"]').forEach((knop) => {
+      knop.addEventListener("click", () => {
+        patchState((s) => {
+          s.trainingenAfgerond = { ...(s.trainingenAfgerond ?? {}), [vandaagKey]: knop.dataset.dag! };
+        });
+        stopRust();
+        const overlay = document.getElementById("klaar-overlay")!;
+        overlay.classList.remove("hidden");
+        overlay.classList.add("flex");
+      });
+    });
+  </script>
+</AppShell>

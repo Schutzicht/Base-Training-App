@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@theme {
+  /* BASE huisstijl */
+  --color-volt: #d6fb00;
+  --color-volt-dim: #a8c500;
+  --color-coal-950: #0a0a0a;
+  --color-coal-900: #101010;
+  --color-coal-800: #161616;
+  --color-coal-700: #1c1c1c;
+  --color-coal-600: #242424;
+  --color-coal-500: #2e2e2e;
+
+  --font-display: "Kanit", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+}
+
+html {
+  background: var(--color-coal-950);
+  color-scheme: dark;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: #fff;
+  min-height: 100svh;
+}
+
+/* Kanit voor koppen en grote cijfers */
+.display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+/* Agensea-glow in BASE-volt */
+.agensea-glow {
+  color: var(--color-volt);
+  text-shadow:
+    0 0 10px rgba(214, 251, 0, 0.55),
+    0 0 26px rgba(214, 251, 0, 0.3);
+}
+
+/* Zachte volt-gloed voor de QR-kaart */
+.volt-glow {
+  box-shadow:
+    0 0 0 1px rgba(214, 251, 0, 0.25),
+    0 0 40px rgba(214, 251, 0, 0.12),
+    0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Safe areas voor standalone PWA */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.animate-pulse-soft {
+  animation: pulse-soft 2.4s ease-in-out infinite;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise-in {
+  animation: rise-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.rise-in-1 {
+  animation-delay: 0.05s;
+}
+.rise-in-2 {
+  animation-delay: 0.12s;
+}
+.rise-in-3 {
+  animation-delay: 0.19s;
+}
+.rise-in-4 {
+  animation-delay: 0.26s;
+}
+
+/* Nette focus voor toetsenbord, geen ring bij tikken */
+:focus-visible {
+  outline: 2px solid var(--color-volt);
+  outline-offset: 2px;
+}

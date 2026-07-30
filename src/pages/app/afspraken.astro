@@ -1,0 +1,126 @@
+---
+import AppShell from "../../layouts/AppShell.astro";
+import { AFSPRAKEN, VRIJE_SLOTEN, langNL, kortNL, hoofdletter } from "../../data/demo";
+---
+
+<AppShell title="Afspraken | BASE app" paginaTitel="Afspraken" rol="lid">
+  <section class="rise-in">
+    <h2 class="display text-2xl font-extrabold">Afspraken</h2>
+    <p class="mt-1 text-sm text-white/50">Jouw sessies met Daan. Plan zelf een extra moment wanneer het jou uitkomt.</p>
+  </section>
+
+  <section class="rise-in rise-in-1 mt-5 flex flex-col gap-3" id="afspraken-lijst">
+    {
+      AFSPRAKEN.map((a) => (
+        <div class="flex items-center gap-4 rounded-2xl border border-white/8 bg-coal-800 p-4">
+          <div class="grid w-14 shrink-0 place-items-center rounded-xl bg-coal-950 border border-white/10 py-2">
+            <span class="display text-lg font-bold leading-none">{new Date(a.datum).getDate()}</span>
+            <span class="mt-0.5 text-[10px] uppercase text-white/50">{new Date(a.datum).toLocaleDateString("nl-NL", { month: "short" })}</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-semibold">{a.type}</p>
+            <p class="text-xs text-white/50">{hoofdletter(langNL(new Date(a.datum)))} - {a.tijd} uur - {a.duurMin} min</p>
+          </div>
+          <span class="shrink-0 rounded-full bg-volt/10 px-2.5 py-1 text-[11px] font-semibold text-volt">Bevestigd</span>
+        </div>
+      ))
+    }
+  </section>
+
+  <section class="rise-in rise-in-2 mt-8">
+    <h3 class="display text-sm font-semibold text-white/85">Extra sessie plannen</h3>
+    <p class="mt-1 text-xs text-white/45">Beschikbare momenten bij Daan de komende week.</p>
+    <div class="mt-4 flex flex-col gap-4">
+      {
+        VRIJE_SLOTEN.map((dag) => (
+          <div>
+            <p class="text-xs font-medium text-white/55">{hoofdletter(kortNL(new Date(dag.datum)))}</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              {dag.tijden.map((tijd) => (
+                <button
+                  type="button"
+                  class="slot rounded-xl border border-white/12 bg-coal-800 px-4 py-2.5 text-sm font-semibold transition-colors hover:border-volt/50"
+                  data-datum={dag.datum}
+                  data-tijd={tijd}
+                >
+                  {tijd}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Bevestiging -->
+  <div id="boek-overlay" class="fixed inset-0 z-[60] hidden items-end justify-center bg-coal-950/80 backdrop-blur-sm lg:items-center">
+    <div class="w-full max-w-md rounded-t-3xl lg:rounded-3xl border border-white/10 bg-coal-900 p-6 pb-10 lg:pb-6">
+      <h3 class="display text-xl font-bold">Sessie aanvragen</h3>
+      <p class="mt-2 text-sm text-white/60" id="boek-tekst"></p>
+      <div class="mt-5 flex gap-3">
+        <button type="button" id="boek-annuleer" class="flex-1 rounded-xl border border-white/15 py-3 text-sm font-semibold text-white/70">Annuleer</button>
+        <button type="button" id="boek-bevestig" class="flex-1 rounded-xl bg-volt py-3 text-sm font-bold text-coal-950">Vraag aan</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { loadState, patchState } from "../../scripts/store";
+
+    const lijst = document.getElementById("afspraken-lijst")!;
+    const overlay = document.getElementById("boek-overlay")!;
+    const boekTekst = document.getElementById("boek-tekst")!;
+    let gekozen: { datum: string; tijd: string } | null = null;
+
+    function afspraakKaart(datum: string, tijd: string, status?: string): HTMLElement {
+      const d = new Date(datum + "T12:00:00");
+      const bevestigd = status === "bevestigd";
+      const badge = bevestigd
+        ? '<span class="shrink-0 rounded-full bg-volt/10 px-2.5 py-1 text-[11px] font-semibold text-volt">Bevestigd</span>'
+        : '<span class="shrink-0 rounded-full bg-white/8 px-2.5 py-1 text-[11px] font-semibold text-white/60">Aangevraagd</span>';
+      const kaart = document.createElement("div");
+      kaart.className = "flex items-center gap-4 rounded-2xl border border-white/8 bg-coal-800 p-4";
+      kaart.innerHTML = `
+        <div class="grid w-14 shrink-0 place-items-center rounded-xl bg-coal-950 border border-white/10 py-2">
+          <span class="display text-lg font-bold leading-none">${d.getDate()}</span>
+          <span class="mt-0.5 text-[10px] uppercase text-white/50">${d.toLocaleDateString("nl-NL", { month: "short" })}</span>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-semibold">Personal training</p>
+          <p class="text-xs text-white/50">${(() => { const t = d.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" }); return t.charAt(0).toUpperCase() + t.slice(1); })()} - ${tijd} uur - 60 min</p>
+        </div>
+        ${badge}`;
+      return kaart;
+    }
+
+    // Eerder aangevraagde sessies terugzetten
+    const state = loadState();
+    (state.extraAfspraken ?? []).forEach((a) => lijst.appendChild(afspraakKaart(a.datum, a.tijd, a.status)));
+
+    document.querySelectorAll<HTMLButtonElement>(".slot").forEach((knop) => {
+      knop.addEventListener("click", () => {
+        gekozen = { datum: knop.dataset.datum!, tijd: knop.dataset.tijd! };
+        const d = new Date(gekozen.datum + "T12:00:00");
+        boekTekst.textContent = `Personal training met Daan op ${d.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })} om ${gekozen.tijd} uur. Daan bevestigt je aanvraag in de app.`;
+        overlay.classList.remove("hidden");
+        overlay.classList.add("flex");
+      });
+    });
+
+    document.getElementById("boek-annuleer")!.addEventListener("click", () => {
+      overlay.classList.add("hidden");
+      overlay.classList.remove("flex");
+    });
+
+    document.getElementById("boek-bevestig")!.addEventListener("click", () => {
+      if (!gekozen) return;
+      patchState((s) => {
+        s.extraAfspraken = [...(s.extraAfspraken ?? []), { ...gekozen!, type: "Personal training" }];
+      });
+      lijst.appendChild(afspraakKaart(gekozen.datum, gekozen.tijd));
+      overlay.classList.add("hidden");
+      overlay.classList.remove("flex");
+    });
+  </script>
+</AppShell>

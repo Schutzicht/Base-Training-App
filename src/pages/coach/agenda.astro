@@ -1,0 +1,121 @@
+---
+import AppShell from "../../layouts/AppShell.astro";
+import { COACH_AGENDA_VANDAAG, kortNL } from "../../data/demo";
+
+// Week vanaf vandaag: vandaag echt gevuld, de rest met een rustig voorbeeldritme.
+const patronen: Record<number, { tijd: string; lid: string; type: string }[]> = {
+  1: [
+    { tijd: "07:00", lid: "Eva Schouten", type: "Personal training" },
+    { tijd: "12:30", lid: "Bram de Jong", type: "Personal training" },
+    { tijd: "17:00", lid: "Nina de Wit", type: "Techniek-sessie" },
+  ],
+  2: [
+    { tijd: "08:00", lid: "Joost Vermeer", type: "Personal training" },
+    { tijd: "16:00", lid: "Gym tour: 1 kandidaat", type: "Kennismaking" },
+  ],
+  3: COACH_AGENDA_VANDAAG.map(({ tijd, lid, type }) => ({ tijd, lid, type })),
+  4: [
+    { tijd: "07:00", lid: "Tim Verbeek", type: "Personal training" },
+    { tijd: "12:30", lid: "Daan Peters", type: "Personal training" },
+    { tijd: "18:00", lid: "Femke Bakker", type: "Check-in" },
+  ],
+  5: [
+    { tijd: "09:00", lid: "Sanne Visser", type: "Personal training" },
+    { tijd: "11:00", lid: "Ruben Kok", type: "Herstel-sessie" },
+    { tijd: "15:00", lid: "Gym tour: 2 kandidaten", type: "Kennismaking" },
+  ],
+  6: [{ tijd: "10:00", lid: "Lotte Maas", type: "Personal training" }],
+  7: [],
+};
+
+const week = Array.from({ length: 7 }, (_, i) => {
+  const d = new Date();
+  d.setDate(d.getDate() + i);
+  const wd = d.getDay() === 0 ? 7 : d.getDay();
+  return {
+    iso: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+    label: i === 0 ? "Vandaag" : i === 1 ? "Morgen" : kortNL(d),
+    sessies: patronen[wd] ?? [],
+    isVandaag: i === 0,
+  };
+});
+---
+
+<AppShell title="Agenda | BASE app" paginaTitel="Agenda" rol="coach" breed>
+  <section class="rise-in">
+    <h2 class="display text-2xl font-extrabold">Agenda</h2>
+    <p class="mt-1 text-sm text-white/50">De komende 7 dagen. Aanvragen van leden komen hier automatisch binnen.</p>
+  </section>
+
+  <div class="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+    {
+      week.map((dag, i) => (
+        <section class:list={["rise-in rounded-3xl border p-5", i < 4 ? `rise-in-${i}` : "", dag.isVandaag ? "border-volt/30 bg-coal-800" : "border-white/8 bg-coal-800"]} data-dag-iso={dag.iso}>
+          <div class="flex items-center justify-between">
+            <h3 class:list={["display text-sm font-bold", dag.isVandaag ? "text-volt" : "text-white/85"]}>{dag.label}</h3>
+            <span class="text-[11px] text-white/40">{dag.sessies.length} gepland</span>
+          </div>
+          <div class="mt-3 flex flex-col gap-2" data-sessies>
+            {dag.sessies.length === 0 && <p class="rounded-xl border border-dashed border-white/10 px-3.5 py-3 text-xs text-white/35">Nog niets gepland</p>}
+            {dag.sessies.map((s) => (
+              <div class="flex items-center gap-3 rounded-xl border border-white/10 bg-coal-950 px-3.5 py-2.5">
+                <span class="display w-12 shrink-0 text-sm font-bold tabular-nums">{s.tijd}</span>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium">{s.lid}</p>
+                  <p class="text-[11px] text-white/45">{s.type}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))
+    }
+  </div>
+
+  <script>
+    import { loadState, patchState } from "../../scripts/store";
+
+    // Sessie-aanvragen van leden (uit de demo: Sanne) tonen met een bevestig-knop.
+    type Aanvraag = { datum: string; tijd: string; type: string; status?: string };
+    const state = loadState();
+    const aanvragen: Aanvraag[] = (state.extraAfspraken as Aanvraag[] | undefined) ?? [];
+
+    aanvragen.forEach((aanvraag, index) => {
+      const sectie = document.querySelector(`[data-dag-iso="${aanvraag.datum}"] [data-sessies]`);
+      if (!sectie) return;
+      sectie.querySelector(".border-dashed")?.remove();
+      const kaart = document.createElement("div");
+      const bevestigd = aanvraag.status === "bevestigd";
+      kaart.className = "flex items-center gap-3 rounded-xl border border-volt/30 bg-volt/8 px-3.5 py-2.5";
+      kaart.innerHTML = `
+        <span class="display w-12 shrink-0 text-sm font-bold tabular-nums">${aanvraag.tijd}</span>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium">Sanne Visser</p>
+          <p class="text-[11px] text-white/50">${aanvraag.type} - aanvraag via de app</p>
+        </div>`;
+      const knop = document.createElement("button");
+      knop.type = "button";
+      if (bevestigd) {
+        knop.className = "shrink-0 rounded-full bg-volt/15 px-2.5 py-1 text-[11px] font-semibold text-volt";
+        knop.textContent = "Bevestigd";
+        knop.disabled = true;
+      } else {
+        knop.className = "shrink-0 rounded-lg bg-volt px-3 py-1.5 text-[11px] font-bold text-coal-950";
+        knop.textContent = "Bevestig";
+        knop.addEventListener("click", () => {
+          patchState((s) => {
+            const lijst = (s.extraAfspraken as Aanvraag[] | undefined) ?? [];
+            if (lijst[index]) lijst[index].status = "bevestigd";
+            s.extraAfspraken = lijst;
+          });
+          knop.replaceWith(Object.assign(document.createElement("span"), {
+            className: "shrink-0 rounded-full bg-volt/15 px-2.5 py-1 text-[11px] font-semibold text-volt",
+            textContent: "Bevestigd",
+          }));
+        });
+      }
+      kaart.appendChild(knop);
+      sectie.appendChild(kaart);
+    });
+  </script>
+</AppShell>

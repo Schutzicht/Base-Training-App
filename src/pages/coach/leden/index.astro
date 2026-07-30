@@ -1,0 +1,70 @@
+---
+import AppShell from "../../../layouts/AppShell.astro";
+import { COACH_LEDEN, CAPACITEIT } from "../../../data/demo";
+
+const trendStijl: Record<string, string> = {
+  "sterk bezig": "bg-volt/10 text-volt",
+  "op schema": "bg-white/8 text-white/60",
+  aandacht: "bg-orange-400/10 text-orange-300",
+};
+---
+
+<AppShell title="Leden | BASE app" paginaTitel="Leden" rol="coach" breed>
+  <section class="rise-in flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h2 class="display text-2xl font-extrabold">Leden</h2>
+      <p class="mt-1 text-sm text-white/50">{CAPACITEIT.bezet} memberships actief van maximaal {CAPACITEIT.max}.</p>
+    </div>
+    <label class="relative block w-full sm:w-72">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/40"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input
+        type="search"
+        id="zoek"
+        placeholder="Zoek op naam of doel"
+        class="w-full rounded-xl border border-white/10 bg-coal-800 py-2.5 pl-10 pr-4 text-sm placeholder:text-white/35 focus:border-volt/50 focus:outline-none"
+      />
+    </label>
+  </section>
+
+  <div class="rise-in rise-in-1 mt-5 grid gap-3 lg:grid-cols-2" id="leden-lijst">
+    {
+      COACH_LEDEN.map((lid) => (
+        <a
+          href={`/coach/leden/${lid.slug}/`}
+          class="lid-kaart group flex items-center gap-4 rounded-2xl border border-white/8 bg-coal-800 p-4 transition-colors hover:border-volt/40"
+          data-zoektekst={`${lid.naam} ${lid.doel}`.toLowerCase()}
+        >
+          <span class="grid size-11 shrink-0 place-items-center rounded-full bg-white/8 font-display text-sm font-bold group-hover:bg-volt group-hover:text-coal-950 transition-colors">
+            {lid.naam.split(" ").map((n) => n[0]).join("")}
+          </span>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <p class="truncate text-sm font-semibold">{lid.naam}</p>
+              <span class="shrink-0 rounded-full bg-coal-950 border border-white/10 px-2 py-0.5 text-[10px] font-medium text-white/55">{lid.type}</span>
+            </div>
+            <p class="mt-0.5 truncate text-xs text-white/50">{lid.doel}</p>
+            <p class="mt-0.5 text-[11px] text-white/35">{lid.schemaWeek} - laatste training {lid.laatsteTraining}</p>
+          </div>
+          <span class:list={["shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold", trendStijl[lid.trend]]}>{lid.trend}</span>
+        </a>
+      ))
+    }
+  </div>
+  <p id="geen-resultaat" class="mt-6 hidden text-center text-sm text-white/40">Geen leden gevonden.</p>
+
+  <script>
+    const zoek = document.getElementById("zoek") as HTMLInputElement;
+    const kaarten = [...document.querySelectorAll<HTMLElement>(".lid-kaart")];
+    const leeg = document.getElementById("geen-resultaat")!;
+    zoek.addEventListener("input", () => {
+      const term = zoek.value.trim().toLowerCase();
+      let zichtbaar = 0;
+      kaarten.forEach((kaart) => {
+        const raak = kaart.dataset.zoektekst!.includes(term);
+        kaart.classList.toggle("hidden", !raak);
+        if (raak) zichtbaar++;
+      });
+      leeg.classList.toggle("hidden", zichtbaar > 0);
+    });
+  </script>
+</AppShell>

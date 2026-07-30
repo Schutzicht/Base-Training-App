@@ -1,0 +1,140 @@
+---
+import AppShell from "../../layouts/AppShell.astro";
+import { CAPACITEIT, COACH_AGENDA_VANDAAG, COACH_LEDEN } from "../../data/demo";
+
+const aandacht = COACH_LEDEN.filter((l) => l.trend === "aandacht");
+const gepland = COACH_AGENDA_VANDAAG.filter((s) => s.status === "gepland").length;
+const bezetPct = Math.round((CAPACITEIT.bezet / CAPACITEIT.max) * 100);
+---
+
+<AppShell title="Overzicht | BASE app" paginaTitel="Overzicht" rol="coach" breed>
+  <section class="rise-in">
+    <p class="text-sm text-white/50" id="datum-regel"></p>
+    <h2 class="display mt-1 text-3xl font-extrabold leading-tight"><span id="groet">Hallo</span>, Daan</h2>
+  </section>
+
+  <div class="mt-6 grid gap-4 lg:grid-cols-3">
+    <section class="rise-in rise-in-1 rounded-3xl border border-white/8 bg-coal-800 p-5">
+      <p class="text-xs text-white/45">Vandaag</p>
+      <p class="display mt-1 text-3xl font-extrabold">{gepland} <span class="text-base text-white/40">sessies te gaan</span></p>
+      <p class="mt-1 text-xs text-white/45">{COACH_AGENDA_VANDAAG.length} totaal gepland</p>
+    </section>
+    <section class="rise-in rise-in-1 rounded-3xl border border-white/8 bg-coal-800 p-5">
+      <div class="flex items-baseline justify-between">
+        <p class="text-xs text-white/45">Limited memberships</p>
+        <p class="text-xs font-semibold text-volt">{bezetPct}% bezet</p>
+      </div>
+      <p class="display mt-1 text-3xl font-extrabold">{CAPACITEIT.bezet} <span class="text-base text-white/40">van {CAPACITEIT.max}</span></p>
+      <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-white/8">
+        <div class="h-full rounded-full bg-volt" style={`width:${bezetPct}%`}></div>
+      </div>
+    </section>
+    <section class="rise-in rise-in-2 rounded-3xl border border-white/8 bg-coal-800 p-5">
+      <p class="text-xs text-white/45">Personal training</p>
+      <p class="display mt-1 text-3xl font-extrabold">{CAPACITEIT.ptKlanten} <span class="text-base text-white/40">actieve klanten</span></p>
+      <p class="mt-1 text-xs text-white/45">3 sessies vandaag afgerond</p>
+    </section>
+  </div>
+
+  <div class="mt-5 grid gap-4 lg:grid-cols-2">
+    <section class="rise-in rise-in-2 rounded-3xl border border-white/8 bg-coal-800 p-5">
+      <div class="flex items-center justify-between">
+        <h3 class="display text-sm font-semibold text-white/85">Agenda vandaag</h3>
+        <a href="/coach/agenda/" class="text-xs font-medium text-volt">Hele agenda</a>
+      </div>
+      <div class="mt-4 flex flex-col gap-2.5">
+        {
+          COACH_AGENDA_VANDAAG.map((s) => (
+            <div class:list={["flex items-center gap-3 rounded-xl border px-3.5 py-2.5", s.status === "afgerond" ? "border-white/5 bg-coal-950/50 opacity-55" : "border-white/10 bg-coal-950"]}>
+              <span class="display w-12 shrink-0 text-sm font-bold tabular-nums">{s.tijd}</span>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium">{s.lid}</p>
+                <p class="text-[11px] text-white/45">{s.type}</p>
+              </div>
+              {s.status === "afgerond" ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="#d6fb00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+              ) : (
+                <span class="size-2 shrink-0 rounded-full bg-volt animate-pulse-soft" />
+              )}
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <div class="flex flex-col gap-4">
+      <section class="rise-in rise-in-3 rounded-3xl border border-white/8 bg-coal-800 p-5">
+        <h3 class="display text-sm font-semibold text-white/85">Vraagt aandacht</h3>
+        <div class="mt-4 flex flex-col gap-2.5">
+          {
+            aandacht.map((lid) => (
+              <a href={`/coach/leden/${lid.slug}/`} class="flex items-center gap-3 rounded-xl border border-white/10 bg-coal-950 px-3.5 py-3 transition-colors hover:border-volt/40">
+                <span class="grid size-9 shrink-0 place-items-center rounded-full bg-white/8 font-display text-xs font-bold">
+                  {lid.naam.split(" ").map((n) => n[0]).join("")}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium">{lid.naam}</p>
+                  <p class="text-[11px] text-white/45">Laatste training: {lid.laatsteTraining}</p>
+                </div>
+                <span class="shrink-0 rounded-full bg-orange-400/10 px-2.5 py-1 text-[11px] font-semibold text-orange-300">Check in</span>
+              </a>
+            ))
+          }
+        </div>
+      </section>
+
+      <section class="rise-in rise-in-4 rounded-3xl border border-white/8 bg-coal-800 p-5" id="activiteit-blok">
+        <h3 class="display text-sm font-semibold text-white/85">Live uit de app</h3>
+        <div class="mt-4 flex flex-col gap-2.5 text-sm" id="activiteit-lijst">
+          <p class="rounded-xl border border-white/10 bg-coal-950 px-3.5 py-3 text-white/60">Tim Verbeek heeft zijn training van vandaag afgerond.</p>
+          <p class="rounded-xl border border-white/10 bg-coal-950 px-3.5 py-3 text-white/60">Bram de Jong heeft 2,4 kg gewichtsverlies gelogd deze maand.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <p class="mt-10 text-center text-[11px] text-white/25 lg:hidden">Made By <span class="agensea-glow font-semibold">Agensea</span></p>
+
+  <script>
+    import { loadState, dateKey } from "../../scripts/store";
+
+    const nu = new Date();
+    const uur = nu.getHours();
+    document.getElementById("groet")!.textContent = uur < 12 ? "Goedemorgen" : uur < 18 ? "Goedemiddag" : "Goedenavond";
+    const datum = nu.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
+    document.getElementById("datum-regel")!.textContent = datum.charAt(0).toUpperCase() + datum.slice(1);
+
+    // Kruisverband met de ledenkant: als Sanne vandaag haar training afrondt, zie je dat hier direct.
+    const state = loadState();
+    if (state.trainingenAfgerond?.[dateKey()]) {
+      const lijst = document.getElementById("activiteit-lijst")!;
+      const item = document.createElement("p");
+      item.className = "rounded-xl border border-volt/25 bg-volt/8 px-3.5 py-3 text-white";
+      item.textContent = "Sanne Visser heeft haar training van vandaag afgerond.";
+      lijst.prepend(item);
+    }
+    const aanvragen = state.extraAfspraken ?? [];
+    if (aanvragen.length) {
+      const lijst = document.getElementById("activiteit-lijst")!;
+      const item = document.createElement("p");
+      item.className = "rounded-xl border border-volt/25 bg-volt/8 px-3.5 py-3 text-white";
+      item.textContent = `Sanne Visser heeft ${aanvragen.length === 1 ? "een extra sessie" : aanvragen.length + " extra sessies"} aangevraagd.`;
+      lijst.prepend(item);
+    }
+    const splitAanvragen = Object.keys((state.splitAanvragen as Record<string, boolean> | undefined) ?? {});
+    if (splitAanvragen.length) {
+      const lijst = document.getElementById("activiteit-lijst")!;
+      const item = document.createElement("p");
+      item.className = "rounded-xl border border-volt/25 bg-volt/8 px-3.5 py-3 text-white";
+      item.textContent = `Sanne Visser wil overstappen naar de split "${splitAanvragen[0]}".`;
+      lijst.prepend(item);
+    }
+    if (state.buddyVerzoekStatus === "geaccepteerd") {
+      const lijst = document.getElementById("activiteit-lijst")!;
+      const item = document.createElement("p");
+      item.className = "rounded-xl border border-white/10 bg-coal-950 px-3.5 py-3 text-white/60";
+      item.textContent = "Sanne Visser en Lotte Maas zijn nu trainbuddies.";
+      lijst.appendChild(item);
+    }
+  </script>
+</AppShell>

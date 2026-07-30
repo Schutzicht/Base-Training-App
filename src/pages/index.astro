@@ -1,0 +1,51 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="BASE app | Demo door Agensea">
+  <div class="relative flex min-h-svh flex-col overflow-hidden">
+    <div class="absolute inset-0">
+      <img src="/img/training-avond.jpeg" alt="" class="h-full w-full object-cover opacity-45" />
+      <div class="absolute inset-0 bg-gradient-to-b from-coal-950/60 via-coal-950/80 to-coal-950"></div>
+    </div>
+
+    <div class="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-6 pt-safe lg:max-w-lg">
+      <div class="flex flex-1 flex-col justify-center py-14">
+        <img src="/img/logo-base-wit.png" alt="BASE" class="rise-in w-44 lg:w-52" />
+        <p class="rise-in rise-in-1 mt-4 text-[13px] uppercase tracking-[0.22em] text-volt font-display font-medium">De app voor jouw studio</p>
+        <h1 class="rise-in rise-in-1 display mt-4 text-4xl lg:text-5xl font-extrabold leading-[1.02]">
+          Alles voor jouw training<br />
+          <span class="text-volt">op een plek</span>
+        </h1>
+        <p class="rise-in rise-in-2 mt-4 max-w-sm text-[15px] leading-relaxed text-white/65">
+          Trainingsschema's, voortgang, voeding, afspraken en jouw persoonlijke QR-code voor 24/7 toegang. Plus de BASE community: vind je trainbuddy en train samen aan dezelfde basis.
+        </p>
+
+        <div class="rise-in rise-in-3 mt-9 flex flex-col gap-3">
+          <a href="/app/" class="group flex items-center justify-between rounded-2xl bg-volt px-5 py-4 text-coal-950 transition-transform active:scale-[0.98]">
+            <span>
+              <span class="display block text-base font-bold">Open als lid</span>
+              <span class="text-[13px] font-medium text-coal-950/70">Jouw schema, voortgang en toegang</span>
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="size-5 transition-transform group-hover:translate-x-1"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a href="/coach/" class="group flex items-center justify-between rounded-2xl border border-white/15 bg-white/5 px-5 py-4 backdrop-blur transition-colors hover:bg-white/10 active:scale-[0.98]">
+            <span>
+              <span class="display block text-base font-bold">Open als trainer</span>
+              <span class="text-[13px] text-white/55">Leden, schema's en agenda beheren</span>
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-white/70 transition-transform group-hover:translate-x-1"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+
+        <p class="rise-in rise-in-4 mt-6 text-xs leading-relaxed text-white/35">
+          Demo-omgeving met voorbeelddata. In de echte app logt elk lid in met een eigen account.
+        </p>
+      </div>
+
+      <footer class="pb-8 pb-safe text-center">
+        <p class="text-xs text-white/40">Made By <a href="https://agensea.nl" rel="noopener" class="agensea-glow font-semibold">Agensea</a></p>
+      </footer>
+    </div>
+  </div>
+</BaseLayout>

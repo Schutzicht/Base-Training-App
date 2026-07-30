@@ -1,0 +1,269 @@
+---
+import AppShell from "../../layouts/AppShell.astro";
+import { BUDDIES, INKOMEND_VERZOEK, COMMUNITY_FEED, SPLITS, CHALLENGE } from "../../data/demo";
+
+const challengePct = Math.round((CHALLENGE.nu / CHALLENGE.doel) * 100);
+---
+
+<AppShell title="Community | BASE app" paginaTitel="Community" rol="lid">
+  <section class="rise-in">
+    <h2 class="display text-2xl font-extrabold">De BASE community</h2>
+    <p class="mt-1 text-sm text-white/50">Klein gehouden, goed gematcht. Train samen, moedig elkaar aan en bouw aan dezelfde basis.</p>
+  </section>
+
+  <!-- Challenge van de maand -->
+  <section class="rise-in rise-in-1 mt-5 overflow-hidden rounded-3xl border border-volt/20 bg-coal-800">
+    <div class="p-5 lg:p-6">
+      <div class="flex items-center justify-between gap-3">
+        <span class="rounded-full bg-volt px-3 py-1 font-display text-[11px] font-bold uppercase tracking-wide text-coal-950">Challenge</span>
+        <span class="text-xs text-white/50">{CHALLENGE.deelnemers} leden doen mee</span>
+      </div>
+      <h3 class="display mt-3 text-xl font-bold">{CHALLENGE.naam}</h3>
+      <p class="mt-1 text-sm text-white/55">{CHALLENGE.omschrijving}</p>
+      <div class="mt-4 flex items-baseline justify-between">
+        <p class="display text-2xl font-extrabold text-volt">{CHALLENGE.nu} <span class="text-sm text-white/45">van de {CHALLENGE.doel} {CHALLENGE.eenheid}</span></p>
+        <p class="text-xs font-semibold text-white/55">{challengePct}%</p>
+      </div>
+      <div class="mt-2 h-2 overflow-hidden rounded-full bg-white/8">
+        <div class="h-full rounded-full bg-volt" style={`width:${challengePct}%`}></div>
+      </div>
+      <button type="button" id="challenge-knop" class="mt-4 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-white/15">Doe mee</button>
+    </div>
+  </section>
+
+  <!-- Trainbuddy -->
+  <section class="rise-in rise-in-2 mt-5">
+    <div class="flex items-center justify-between">
+      <h3 class="display text-sm font-semibold text-white/85">Vind je trainbuddy</h3>
+      <label class="flex items-center gap-2 text-xs text-white/50">
+        Sta open voor buddies
+        <button type="button" id="buddy-toggle" role="switch" aria-checked="false" class="relative h-6 w-11 rounded-full bg-white/15 transition-colors">
+          <span id="buddy-knopje" class="absolute left-0.5 top-0.5 size-5 rounded-full bg-white transition-transform"></span>
+        </button>
+      </label>
+    </div>
+    <p class="mt-1 text-xs text-white/45">Op basis van jouw trainingsdagen, doel en niveau. Alleen zichtbaar voor leden van BASE.</p>
+
+    <!-- Inkomend verzoek -->
+    <div id="verzoek-kaart" class="mt-4 rounded-2xl border border-volt/30 bg-volt/8 p-4">
+      <div class="flex items-center gap-3">
+        <span class="grid size-11 shrink-0 place-items-center rounded-full bg-volt font-display text-sm font-bold text-coal-950">LM</span>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-semibold">{INKOMEND_VERZOEK.naam} <span class="font-normal text-white/50">wil jouw trainbuddy worden</span></p>
+          <p class="text-xs text-white/50">{INKOMEND_VERZOEK.focus} - {INKOMEND_VERZOEK.moment}</p>
+        </div>
+      </div>
+      <p class="mt-3 rounded-xl bg-coal-950/60 px-3.5 py-2.5 text-xs leading-relaxed text-white/65">"{INKOMEND_VERZOEK.bericht}"</p>
+      <div class="mt-3 flex gap-2">
+        <button type="button" id="verzoek-accepteer" class="flex-1 rounded-xl bg-volt py-2.5 text-sm font-bold text-coal-950">Accepteer</button>
+        <button type="button" id="verzoek-later" class="flex-1 rounded-xl border border-white/15 py-2.5 text-sm font-semibold text-white/60">Misschien later</button>
+      </div>
+    </div>
+    <p id="verzoek-klaar" class="mt-4 hidden rounded-2xl border border-volt/30 bg-volt/8 p-4 text-sm">
+      Jij en <span class="font-semibold">Lotte Maas</span> zijn nu trainbuddies. Jullie zien elkaars trainingsmomenten en kunnen samen inplannen.
+    </p>
+
+    <div class="mt-3 flex flex-col gap-3">
+      {
+        BUDDIES.map((buddy) => (
+          <div class="flex items-center gap-4 rounded-2xl border border-white/8 bg-coal-800 p-4">
+            <span class="grid size-11 shrink-0 place-items-center rounded-full bg-white/8 font-display text-sm font-bold">
+              {buddy.naam.split(" ").map((n) => n[0]).join("")}
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold">{buddy.naam}</p>
+              <p class="text-xs text-white/50">{buddy.focus} - {buddy.moment}</p>
+              <p class="mt-0.5 text-[11px] text-volt/90">Overlap met jou: {buddy.overlap}</p>
+            </div>
+            <button
+              type="button"
+              class="buddy-knop shrink-0 rounded-xl border border-white/15 px-3.5 py-2 text-xs font-semibold transition-colors hover:border-volt/50"
+              data-buddy={buddy.id}
+            >
+              Stuur verzoek
+            </button>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Feed -->
+  <section class="rise-in rise-in-3 mt-8">
+    <h3 class="display text-sm font-semibold text-white/85">Deze week bij BASE</h3>
+    <div class="mt-3 flex flex-col gap-3">
+      {
+        COMMUNITY_FEED.map((item, i) => (
+          <div class="rounded-2xl border border-white/8 bg-coal-800 p-4">
+            <div class="flex items-start gap-3">
+              <span class="grid size-9 shrink-0 place-items-center rounded-full bg-white/8 font-display text-xs font-bold">
+                {item.wie.split(" ").map((n) => n[0]).join("")}
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm leading-snug"><span class="font-semibold">{item.wie}</span> <span class="text-white/70">{item.wat}</span></p>
+                <p class="mt-0.5 text-[11px] text-white/40">{item.wanneer}</p>
+              </div>
+              <button type="button" class="kudos-knop flex shrink-0 items-center gap-1.5 rounded-full border border-white/12 px-3 py-1.5 text-xs font-semibold text-white/60 transition-colors" data-index={i} data-basis={item.kudos}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="size-4"><path d="M8 11.5V19a1.5 1.5 0 0 0 1.5 1.5h7.2a2 2 0 0 0 2-1.6l1.1-6a2 2 0 0 0-2-2.4h-4.3l.9-4.1a1.7 1.7 0 0 0-3-1.4L8 11.5z"/><path d="M8 11.5H4.5V20.5H8"/></svg>
+                <span class="kudos-teller tabular-nums">{item.kudos}</span>
+              </button>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Aanbevolen splits -->
+  <section class="rise-in rise-in-4 mt-8">
+    <h3 class="display text-sm font-semibold text-white/85">Aanbevolen splits</h3>
+    <p class="mt-1 text-xs text-white/45">Samengesteld door de trainers van BASE. Iets voor jou? Vraag hem aan en Daan stemt hem op jou af.</p>
+    <div class="mt-3 grid gap-3 lg:grid-cols-3">
+      {
+        SPLITS.map((split) => (
+          <div class="flex flex-col rounded-2xl border border-white/8 bg-coal-800 p-5">
+            <div class="flex items-center justify-between gap-2">
+              <h4 class="display text-base font-bold">{split.naam}</h4>
+              {split.populair && <span class="rounded-full bg-volt/10 px-2.5 py-1 text-[10px] font-semibold text-volt">Meest gekozen bij BASE</span>}
+            </div>
+            <p class="mt-0.5 text-xs text-white/50">{split.dagen} dagen per week - {split.focus}</p>
+            <p class="mt-2 text-[13px] leading-relaxed text-white/60">{split.omschrijving}</p>
+            <ul class="mt-3 flex flex-col gap-1.5 text-xs text-white/55">
+              {split.indeling.map((regel) => (
+                <li class="flex items-center gap-2">
+                  <span class="size-1 shrink-0 rounded-full bg-volt" />
+                  {regel}
+                </li>
+              ))}
+            </ul>
+            <button type="button" class="split-knop mt-4 rounded-xl border border-white/15 py-2.5 text-sm font-semibold transition-colors hover:border-volt/50" data-split={split.naam}>
+              Vraag aan bij Daan
+            </button>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <script>
+    import { loadState, patchState } from "../../scripts/store";
+
+    const state = loadState();
+
+    // Buddy opt-in toggle
+    const toggle = document.getElementById("buddy-toggle")!;
+    const knopje = document.getElementById("buddy-knopje")!;
+    let open = (state.buddyOptIn as boolean | undefined) ?? true;
+    function toonToggle(): void {
+      toggle.setAttribute("aria-checked", String(open));
+      toggle.classList.toggle("bg-volt", open);
+      toggle.classList.toggle("bg-white/15", !open);
+      knopje.style.transform = open ? "translateX(20px)" : "translateX(0)";
+    }
+    toonToggle();
+    toggle.addEventListener("click", () => {
+      open = !open;
+      toonToggle();
+      patchState((s) => {
+        (s as Record<string, unknown>).buddyOptIn = open;
+      });
+    });
+
+    // Inkomend verzoek
+    const verzoekKaart = document.getElementById("verzoek-kaart")!;
+    const verzoekKlaar = document.getElementById("verzoek-klaar")!;
+    const verzoekStatus = state.buddyVerzoekStatus as string | undefined;
+    if (verzoekStatus === "geaccepteerd") {
+      verzoekKaart.classList.add("hidden");
+      verzoekKlaar.classList.remove("hidden");
+    } else if (verzoekStatus === "later") {
+      verzoekKaart.classList.add("hidden");
+    }
+    document.getElementById("verzoek-accepteer")!.addEventListener("click", () => {
+      patchState((s) => {
+        (s as Record<string, unknown>).buddyVerzoekStatus = "geaccepteerd";
+      });
+      verzoekKaart.classList.add("hidden");
+      verzoekKlaar.classList.remove("hidden");
+    });
+    document.getElementById("verzoek-later")!.addEventListener("click", () => {
+      patchState((s) => {
+        (s as Record<string, unknown>).buddyVerzoekStatus = "later";
+      });
+      verzoekKaart.classList.add("hidden");
+    });
+
+    // Buddyverzoeken versturen
+    const verzonden = (state.buddyVerzoeken as Record<string, boolean> | undefined) ?? {};
+    document.querySelectorAll<HTMLButtonElement>(".buddy-knop").forEach((knop) => {
+      const id = knop.dataset.buddy!;
+      const zetVerzonden = () => {
+        knop.textContent = "Verzoek gestuurd";
+        knop.className = "buddy-knop shrink-0 rounded-xl bg-volt/15 px-3.5 py-2 text-xs font-semibold text-volt";
+        knop.disabled = true;
+      };
+      if (verzonden[id]) zetVerzonden();
+      knop.addEventListener("click", () => {
+        patchState((s) => {
+          (s as Record<string, unknown>).buddyVerzoeken = { ...((s.buddyVerzoeken as object) ?? {}), [id]: true };
+        });
+        zetVerzonden();
+      });
+    });
+
+    // Kudos
+    const kudos = (state.kudos as Record<string, boolean> | undefined) ?? {};
+    document.querySelectorAll<HTMLButtonElement>(".kudos-knop").forEach((knop) => {
+      const index = knop.dataset.index!;
+      const basis = Number(knop.dataset.basis);
+      const teller = knop.querySelector(".kudos-teller")!;
+      const toon = (aan: boolean) => {
+        teller.textContent = String(basis + (aan ? 1 : 0));
+        knop.classList.toggle("border-volt/50", aan);
+        knop.classList.toggle("text-volt", aan);
+        knop.classList.toggle("bg-volt/8", aan);
+        knop.classList.toggle("text-white/60", !aan);
+      };
+      toon(kudos[index] ?? false);
+      knop.addEventListener("click", () => {
+        kudos[index] = !kudos[index];
+        patchState((s) => {
+          (s as Record<string, unknown>).kudos = kudos;
+        });
+        toon(kudos[index]!);
+      });
+    });
+
+    // Challenge meedoen
+    const challengeKnop = document.getElementById("challenge-knop") as HTMLButtonElement;
+    const doetMee = () => {
+      challengeKnop.textContent = "Je doet mee";
+      challengeKnop.className = "mt-4 rounded-xl bg-volt px-4 py-2.5 text-sm font-bold text-coal-950";
+    };
+    if (state.challengeMeedoen) doetMee();
+    challengeKnop.addEventListener("click", () => {
+      patchState((s) => {
+        (s as Record<string, unknown>).challengeMeedoen = true;
+      });
+      doetMee();
+    });
+
+    // Splits aanvragen
+    const splitAanvragen = (state.splitAanvragen as Record<string, boolean> | undefined) ?? {};
+    document.querySelectorAll<HTMLButtonElement>(".split-knop").forEach((knop) => {
+      const naam = knop.dataset.split!;
+      const zetAangevraagd = () => {
+        knop.textContent = "Aangevraagd bij Daan";
+        knop.className = "split-knop mt-4 rounded-xl bg-volt/15 py-2.5 text-sm font-semibold text-volt";
+        knop.disabled = true;
+      };
+      if (splitAanvragen[naam]) zetAangevraagd();
+      knop.addEventListener("click", () => {
+        patchState((s) => {
+          (s as Record<string, unknown>).splitAanvragen = { ...((s.splitAanvragen as object) ?? {}), [naam]: true };
+        });
+        zetAangevraagd();
+      });
+    });
+  </script>
+</AppShell>

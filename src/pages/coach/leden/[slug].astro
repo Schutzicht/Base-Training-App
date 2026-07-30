@@ -1,0 +1,301 @@
+---
+import AppShell from "../../../layouts/AppShell.astro";
+import { COACH_LEDEN, SCHEMA, BIBLIOTHEEK, PRS } from "../../../data/demo";
+
+export function getStaticPaths() {
+  return COACH_LEDEN.map((lid) => ({ params: { slug: lid.slug }, props: { lid } }));
+}
+
+const { lid } = Astro.props;
+const isSanne = lid.slug === "sanne-visser";
+const initialen = lid.naam.split(" ").map((n) => n[0]).join("");
+---
+
+<AppShell title={`${lid.naam} | BASE app`} paginaTitel="Lid" rol="coach" breed>
+  <a href="/coach/leden/" class="rise-in inline-flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="size-4"><path d="M15 6l-6 6 6 6"/></svg>
+    Alle leden
+  </a>
+
+  <section class="rise-in mt-4 flex flex-wrap items-center gap-5 rounded-3xl border border-white/8 bg-coal-800 p-6">
+    <span class="grid size-16 place-items-center rounded-2xl bg-volt font-display text-xl font-bold text-coal-950">{initialen}</span>
+    <div class="min-w-0 flex-1">
+      <h2 class="display text-2xl font-extrabold">{lid.naam}</h2>
+      <p class="mt-0.5 text-sm text-white/55">{lid.doel}</p>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <span class="rounded-full bg-coal-950 border border-white/10 px-2.5 py-1 text-[11px] font-medium text-white/60">{lid.type}</span>
+        <span class="rounded-full bg-coal-950 border border-white/10 px-2.5 py-1 text-[11px] font-medium text-white/60">{lid.schemaWeek}</span>
+        <span class="rounded-full bg-coal-950 border border-white/10 px-2.5 py-1 text-[11px] font-medium text-white/60">Laatste training {lid.laatsteTraining}</span>
+      </div>
+    </div>
+  </section>
+
+  {
+    isSanne ? (
+      <>
+        <section class="rise-in rise-in-1 mt-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="display text-lg font-bold">Schema: {SCHEMA.naam}</h3>
+              <p class="text-xs text-white/45">Pas sets, herhalingen en gewicht aan. Sanne ziet wijzigingen direct in haar app.</p>
+            </div>
+            <button type="button" id="reset-schema" class="rounded-xl border border-white/15 px-4 py-2 text-xs font-semibold text-white/60 hover:text-white transition-colors">
+              Zet terug naar origineel
+            </button>
+          </div>
+
+          <div class="mt-4 grid gap-4 xl:grid-cols-3">
+            {SCHEMA.dagen.map((dag) => (
+              <div class="rounded-3xl border border-white/8 bg-coal-800 p-5" data-editor-dag={dag.id}>
+                <p class="display text-sm font-bold">{dag.label} <span class="font-medium text-white/45">- {dag.naam}</span></p>
+                <div class="mt-4 flex flex-col gap-3" data-editor-lijst>
+                  {dag.oefeningen.map((oef) => (
+                    <div class="editor-rij rounded-2xl border border-white/10 bg-coal-950 p-3.5" data-dag={dag.id} data-oef={oef.id} data-sets={oef.sets} data-reps={oef.reps} data-gewicht={oef.gewicht ?? ""}>
+                      <p class="text-sm font-semibold">{oef.naam}</p>
+                      <p class="text-[11px] text-white/40">{oef.spiergroep}</p>
+                      <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <div class="flex items-center gap-1 rounded-lg border border-white/10 bg-coal-800 p-0.5">
+                          <button type="button" data-actie="sets-min" class="grid size-7 place-items-center rounded-md text-white/60 hover:bg-white/8" aria-label="Minder sets">-</button>
+                          <span class="min-w-12 text-center text-xs font-semibold tabular-nums" data-veld="sets">{oef.sets} sets</span>
+                          <button type="button" data-actie="sets-plus" class="grid size-7 place-items-center rounded-md text-white/60 hover:bg-white/8" aria-label="Meer sets">+</button>
+                        </div>
+                        <input
+                          type="text"
+                          data-veld="reps"
+                          value={oef.reps}
+                          class="w-16 rounded-lg border border-white/10 bg-coal-800 px-2 py-1.5 text-center text-xs font-semibold focus:border-volt/50 focus:outline-none"
+                          aria-label="Herhalingen"
+                        />
+                        {oef.gewicht !== null && (
+                          <div class="flex items-center gap-1 rounded-lg border border-white/10 bg-coal-800 p-0.5">
+                            <button type="button" data-actie="kg-min" class="grid size-7 place-items-center rounded-md text-white/60 hover:bg-white/8" aria-label="Minder gewicht">-</button>
+                            <span class="min-w-14 text-center text-xs font-semibold tabular-nums" data-veld="kg">{oef.gewicht} kg</span>
+                            <button type="button" data-actie="kg-plus" class="grid size-7 place-items-center rounded-md text-white/60 hover:bg-white/8" aria-label="Meer gewicht">+</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div class="mt-3 flex gap-2">
+                  <select data-veld="bieb" class="min-w-0 flex-1 rounded-lg border border-white/10 bg-coal-950 px-2.5 py-2 text-xs text-white/70 focus:border-volt/50 focus:outline-none">
+                    <option value="">Oefening toevoegen</option>
+                    {BIBLIOTHEEK.map((b) => (
+                      <option value={b.naam}>{b.naam} ({b.spiergroep})</option>
+                    ))}
+                  </select>
+                  <button type="button" data-actie="toevoegen" data-dag={dag.id} class="shrink-0 rounded-lg bg-volt px-3.5 py-2 text-xs font-bold text-coal-950">Voeg toe</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p id="opgeslagen-melding" class="mt-3 text-xs text-volt opacity-0 transition-opacity">Opgeslagen. Sanne ziet dit direct in haar app.</p>
+        </section>
+
+        <section class="rise-in rise-in-2 mt-5 grid gap-4 lg:grid-cols-2">
+          <div class="rounded-3xl border border-white/8 bg-coal-800 p-5">
+            <h3 class="display text-sm font-semibold text-white/85">Records</h3>
+            <div class="mt-3 flex flex-wrap gap-2">
+              {PRS.map((pr) => (
+                <span class="rounded-full border border-white/10 bg-coal-950 px-3 py-1.5 text-xs">
+                  {pr.oefening} <span class="font-bold text-volt">{pr.kg} {"eenheid" in pr ? pr.eenheid : "kg"}</span>
+                </span>
+              ))}
+            </div>
+            <div class="mt-4 hidden" id="gelogd-blok">
+              <p class="text-xs text-white/45">Door Sanne aangepaste trainingsgewichten:</p>
+              <div class="mt-2 flex flex-wrap gap-2" id="gelogd-lijst" />
+            </div>
+          </div>
+          <div class="rounded-3xl border border-white/8 bg-coal-800 p-5">
+            <h3 class="display text-sm font-semibold text-white/85">Notities</h3>
+            <textarea
+              id="notities"
+              rows="5"
+              placeholder="Bijvoorbeeld: knie in de gaten houden bij squats, volgende blok focus op pull-ups."
+              class="mt-3 w-full resize-none rounded-xl border border-white/10 bg-coal-950 p-3.5 text-sm placeholder:text-white/30 focus:border-volt/50 focus:outline-none"
+            />
+            <p class="mt-1.5 text-[11px] text-white/35" id="notitie-status">Wordt automatisch opgeslagen</p>
+          </div>
+        </section>
+      </>
+    ) : (
+      <section class="rise-in rise-in-1 mt-5 rounded-3xl border border-white/8 bg-coal-800 p-6">
+        <h3 class="display text-lg font-bold">Schema en voortgang</h3>
+        <p class="mt-2 max-w-xl text-sm leading-relaxed text-white/55">
+          In deze demo is het volledige schema uitgewerkt voor Sanne Visser. In de echte app heeft elk lid hier een eigen schema, voortgang en notities.
+        </p>
+        <a href="/coach/leden/sanne-visser/" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-volt px-4 py-2.5 text-sm font-bold text-coal-950">
+          Bekijk het profiel van Sanne
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="size-4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </section>
+    )
+  }
+
+  <script>
+    import { loadState, patchState } from "../../../scripts/store";
+
+    const state = loadState();
+    const melding = document.getElementById("opgeslagen-melding");
+    let meldTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function toonOpgeslagen(): void {
+      if (!melding) return;
+      melding.classList.remove("opacity-0");
+      if (meldTimer) clearTimeout(meldTimer);
+      meldTimer = setTimeout(() => melding.classList.add("opacity-0"), 2200);
+    }
+
+    // Editor-rijen: overrides inladen en steppers koppelen
+    document.querySelectorAll<HTMLElement>(".editor-rij").forEach((rij) => {
+      const dag = rij.dataset.dag!;
+      const oef = rij.dataset.oef!;
+      const sleutel = `${dag}:${oef}`;
+      const override = state.schemaOverrides?.[sleutel] ?? {};
+
+      let sets = override.sets ?? Number(rij.dataset.sets);
+      let kg = override.gewicht ?? (rij.dataset.gewicht ? Number(rij.dataset.gewicht) : null);
+      const repsInput = rij.querySelector<HTMLInputElement>('[data-veld="reps"]')!;
+      if (override.reps) repsInput.value = override.reps;
+
+      const setsEl = rij.querySelector<HTMLElement>('[data-veld="sets"]')!;
+      const kgEl = rij.querySelector<HTMLElement>('[data-veld="kg"]');
+      const toon = () => {
+        setsEl.textContent = `${sets} sets`;
+        if (kgEl && kg !== null) kgEl.textContent = `${kg} kg`;
+      };
+      toon();
+
+      const bewaar = () => {
+        patchState((s) => {
+          s.schemaOverrides = {
+            ...(s.schemaOverrides ?? {}),
+            [sleutel]: { sets, reps: repsInput.value, ...(kg !== null ? { gewicht: kg } : {}) },
+          };
+        });
+        toonOpgeslagen();
+      };
+
+      rij.querySelector('[data-actie="sets-min"]')?.addEventListener("click", () => {
+        sets = Math.max(1, sets - 1);
+        toon();
+        bewaar();
+      });
+      rij.querySelector('[data-actie="sets-plus"]')?.addEventListener("click", () => {
+        sets = Math.min(8, sets + 1);
+        toon();
+        bewaar();
+      });
+      rij.querySelector('[data-actie="kg-min"]')?.addEventListener("click", () => {
+        if (kg === null) return;
+        kg = Math.max(0, Math.round((kg - 2.5) * 10) / 10);
+        toon();
+        bewaar();
+      });
+      rij.querySelector('[data-actie="kg-plus"]')?.addEventListener("click", () => {
+        if (kg === null) return;
+        kg = Math.round((kg + 2.5) * 10) / 10;
+        toon();
+        bewaar();
+      });
+      repsInput.addEventListener("change", bewaar);
+    });
+
+    // Oefening toevoegen per dag
+    function toevoegingRij(dag: string, index: number, oefNaam: string): HTMLElement {
+      const rij = document.createElement("div");
+      rij.className = "rounded-2xl border border-volt/25 bg-coal-950 p-3.5";
+      rij.innerHTML = `
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <p class="text-sm font-semibold">${oefNaam}</p>
+            <p class="text-[11px] text-white/40">Toegevoegd - 3 x 10</p>
+          </div>
+          <button type="button" class="text-[11px] font-semibold text-white/40 hover:text-orange-300" data-verwijder>Verwijder</button>
+        </div>`;
+      rij.querySelector("[data-verwijder]")!.addEventListener("click", () => {
+        patchState((s) => {
+          const lijst = (s.schemaToevoegingen as Record<string, string[]> | undefined)?.[dag] ?? [];
+          lijst.splice(index, 1);
+          (s as Record<string, unknown>).schemaToevoegingen = { ...((s.schemaToevoegingen as object) ?? {}), [dag]: lijst };
+        });
+        rij.remove();
+        toonOpgeslagen();
+      });
+      return rij;
+    }
+
+    const toevoegingen = (state.schemaToevoegingen as Record<string, string[]> | undefined) ?? {};
+    document.querySelectorAll<HTMLElement>("[data-editor-dag]").forEach((blok) => {
+      const dag = blok.dataset.editorDag!;
+      const lijstEl = blok.querySelector("[data-editor-lijst]")!;
+      (toevoegingen[dag] ?? []).forEach((naam, i) => lijstEl.appendChild(toevoegingRij(dag, i, naam)));
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-actie="toevoegen"]').forEach((knop) => {
+      knop.addEventListener("click", () => {
+        const blok = knop.closest("[data-editor-dag]")!;
+        const dag = knop.dataset.dag!;
+        const select = blok.querySelector<HTMLSelectElement>('[data-veld="bieb"]')!;
+        if (!select.value) return;
+        const naam = select.value;
+        patchState((s) => {
+          const huidig = (s.schemaToevoegingen as Record<string, string[]> | undefined) ?? {};
+          (s as Record<string, unknown>).schemaToevoegingen = { ...huidig, [dag]: [...(huidig[dag] ?? []), naam] };
+        });
+        const lijstEl = blok.querySelector("[data-editor-lijst]")!;
+        lijstEl.appendChild(toevoegingRij(dag, (toevoegingen[dag] ?? []).length, naam));
+        select.value = "";
+        toonOpgeslagen();
+      });
+    });
+
+    // Reset
+    document.getElementById("reset-schema")?.addEventListener("click", () => {
+      patchState((s) => {
+        delete s.schemaOverrides;
+        delete (s as Record<string, unknown>).schemaToevoegingen;
+      });
+      location.reload();
+    });
+
+    // Door het lid aangepaste gewichten
+    const gewichten = state.gewichten ?? {};
+    const namen: Record<string, string> = {
+      squat: "Back squat", rdl: "Romanian deadlift", splitsquat: "Bulgarian split squat", legcurl: "Leg curl",
+      bench: "Bench press", ohp: "Shoulder press", row: "Seated row", facepull: "Face pull",
+      deadlift: "Deadlift", pushpress: "Push press", goblet: "Goblet squat", carry: "Farmer carry",
+    };
+    const items = Object.entries(gewichten);
+    if (items.length) {
+      document.getElementById("gelogd-blok")?.classList.remove("hidden");
+      const lijst = document.getElementById("gelogd-lijst");
+      items.forEach(([id, kg]) => {
+        const chip = document.createElement("span");
+        chip.className = "rounded-full border border-volt/25 bg-volt/8 px-3 py-1.5 text-xs";
+        chip.innerHTML = `${namen[id] ?? id} <span class="font-bold text-volt">${kg} kg</span>`;
+        lijst?.appendChild(chip);
+      });
+    }
+
+    // Notities
+    const notities = document.getElementById("notities") as HTMLTextAreaElement | null;
+    if (notities) {
+      const slug = location.pathname.split("/").filter(Boolean).pop()!;
+      notities.value = state.coachNotities?.[slug] ?? "";
+      const status = document.getElementById("notitie-status")!;
+      let saveTimer: ReturnType<typeof setTimeout> | null = null;
+      notities.addEventListener("input", () => {
+        if (saveTimer) clearTimeout(saveTimer);
+        status.textContent = "Opslaan...";
+        saveTimer = setTimeout(() => {
+          patchState((s) => {
+            s.coachNotities = { ...(s.coachNotities ?? {}), [slug]: notities.value };
+          });
+          status.textContent = "Opgeslagen";
+        }, 500);
+      });
+    }
+  </script>
+</AppShell>

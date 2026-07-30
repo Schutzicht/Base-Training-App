@@ -1,0 +1,22 @@
+{
+  "name": "base-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --port 4640",
+    "build": "astro build",
+    "preview": "astro preview --port 4640"
+  },
+  "dependencies": {
+    "@fontsource/kanit": "^5.2.5",
+    "@tailwindcss/vite": "^4.1.11",
+    "astro": "^6.1.0",
+    "qrcode": "^1.5.4",
+    "tailwindcss": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5",
+    "typescript": "^5.7.3",
+    "vite": "^7.3.2"
+  }
+}
