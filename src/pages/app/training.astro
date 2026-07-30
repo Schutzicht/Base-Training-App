@@ -1,9 +1,18 @@
 ---
 import AppShell from "../../layouts/AppShell.astro";
-import { SCHEMA, trainingVanVandaag, volgendeTraining } from "../../data/demo";
+import { SCHEMA, KRACHT_VERLOOP, trainingVanVandaag, volgendeTraining } from "../../data/demo";
 
 const vandaag = trainingVanVandaag();
 const actieveDag = vandaag?.id ?? volgendeTraining().dag.id;
+
+// Korte progressieregel per oefening, alleen als er verloop-data is
+function progressieVan(id: string): { tekst: string; delta: number } | null {
+  const verloop = KRACHT_VERLOOP[id];
+  if (!verloop) return null;
+  const delta = Math.round((verloop.punten[verloop.punten.length - 1]!.kg - verloop.punten[0]!.kg) * 10) / 10;
+  const tekst = delta > 0 ? `▲ +${delta} ${verloop.eenheid} in 8 weken` : delta < 0 ? `▼ ${delta} ${verloop.eenheid} in 8 weken` : "≈ gelijk gebleven";
+  return { tekst, delta };
+}
 ---
 
 <AppShell title="Training | BASE app" paginaTitel="Training" rol="lid">
@@ -81,6 +90,23 @@ const actieveDag = vandaag?.id ?? volgendeTraining().dag.id;
             </div>
             {oef.cue && <p class="mt-2 text-xs text-white/40">Tip: {oef.cue}</p>}
             <div class="mt-4 flex flex-wrap gap-2" data-veld="sets" />
+            {(() => {
+              const prog = progressieVan(oef.id);
+              return (
+                prog && (
+                  <a href={`/app/voortgang/?oefening=${oef.id}`} class="mt-4 flex items-center justify-between border-t border-white/8 pt-3 text-xs text-white/45 transition-colors hover:text-white">
+                    <span class="flex items-center gap-1.5">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="size-3.5"><path d="M3.5 19.5l5-7 4 3.5 7.5-9.5" /><circle cx="20" cy="6.5" r="1.6" fill="currentColor" stroke="none" /></svg>
+                      Progressie
+                    </span>
+                    <span class:list={["flex items-center gap-1 font-semibold", prog.delta > 0 ? "text-emerald-300" : prog.delta < 0 ? "text-red-300" : "text-white/40"]}>
+                      {prog.tekst}
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5"><path d="M9 6l6 6-6 6" /></svg>
+                    </span>
+                  </a>
+                )
+              );
+            })()}
           </article>
         ))}
 

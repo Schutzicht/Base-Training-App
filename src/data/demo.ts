@@ -131,7 +131,7 @@ export function isoDag(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-// Krachtverloop per hoofdoefening: laatste 8 weken, oplopend.
+// Verloop per oefening: laatste 8 weken, oplopend. Eindwaarde = huidige waarde in het schema.
 function reeks(start: number, stappen: number[], weekAfstand = 7): { datum: string; kg: number }[] {
   let kg = start;
   return stappen.map((stap, i) => {
@@ -140,22 +140,39 @@ function reeks(start: number, stappen: number[], weekAfstand = 7): { datum: stri
   });
 }
 
-export const KRACHT_VERLOOP: Record<string, { naam: string; punten: { datum: string; kg: number }[] }> = {
-  squat: { naam: "Back squat", punten: reeks(60, [0, 5, 2.5, 2.5, 5, 0, 2.5, 2.5]) },
-  bench: { naam: "Bench press", punten: reeks(50, [0, 2.5, 2.5, 0, 2.5, 2.5, 0, 2.5]) },
-  deadlift: { naam: "Deadlift", punten: reeks(80, [0, 5, 5, 2.5, 2.5, 0, 2.5, 2.5]) },
+export type OefeningVerloop = { naam: string; eenheid: "kg" | "reps" | "sec"; punten: { datum: string; kg: number }[] };
+
+export const KRACHT_VERLOOP: Record<string, OefeningVerloop> = {
+  squat: { naam: "Back squat", eenheid: "kg", punten: reeks(60, [0, 5, 2.5, 2.5, 5, 0, 2.5, 2.5]) },
+  bench: { naam: "Bench press", eenheid: "kg", punten: reeks(50, [0, 2.5, 2.5, 0, 2.5, 2.5, 0, 2.5]) },
+  deadlift: { naam: "Deadlift", eenheid: "kg", punten: reeks(80, [0, 5, 5, 2.5, 2.5, 0, 2.5, 2.5]) },
+  rdl: { naam: "Romanian deadlift", eenheid: "kg", punten: reeks(57.5, [0, 2.5, 2.5, 2.5, 0, 2.5, 2.5, 0]) },
+  splitsquat: { naam: "Bulgarian split squat", eenheid: "kg", punten: reeks(10, [0, 2, 0, 2, 0, 2, 0, 0]) },
+  legcurl: { naam: "Leg curl", eenheid: "kg", punten: reeks(25, [0, 2.5, 2.5, 0, 2.5, 0, 2.5, 0]) },
+  pullup: { naam: "Pull-up", eenheid: "reps", punten: reeks(3, [0, 1, 0, 1, 0, 0, 1, 0]) },
+  ohp: { naam: "Dumbbell shoulder press", eenheid: "kg", punten: reeks(10, [0, 2, 0, 0, 2, 0, 0, 0]) },
+  row: { naam: "Seated row", eenheid: "kg", punten: reeks(45, [0, 2.5, 0, 2.5, 2.5, 0, 2.5, 0]) },
+  facepull: { naam: "Face pull", eenheid: "kg", punten: reeks(20, [0, 0, 2.5, 0, 0, 2.5, 0, 0]) },
+  pushpress: { naam: "Push press", eenheid: "kg", punten: reeks(32.5, [0, 2.5, 0, 2.5, 0, 2.5, 0, 0]) },
+  goblet: { naam: "Goblet squat", eenheid: "kg", punten: reeks(16, [0, 2, 2, 0, 2, 0, 2, 0]) },
+  carry: { naam: "Farmer carry", eenheid: "kg", punten: reeks(16, [0, 2, 0, 2, 2, 0, 2, 0]) },
+  plank: { naam: "Plank", eenheid: "sec", punten: reeks(30, [0, 5, 0, 5, 0, 0, 5, 0]) },
 };
 
-export const GEWICHT_VERLOOP: { datum: string; kg: number }[] = [
-  { datum: isoDag(dagenTerug(49)), kg: 71.6 },
-  { datum: isoDag(dagenTerug(42)), kg: 71.1 },
-  { datum: isoDag(dagenTerug(35)), kg: 70.8 },
-  { datum: isoDag(dagenTerug(28)), kg: 70.2 },
-  { datum: isoDag(dagenTerug(21)), kg: 69.9 },
-  { datum: isoDag(dagenTerug(14)), kg: 69.5 },
-  { datum: isoDag(dagenTerug(7)), kg: 69.3 },
-  { datum: isoDag(dagenTerug(0)), kg: 69.0 },
-];
+// Wegingen: bijna dagelijks gewogen de afgelopen 8 weken, met dagschommeling rond een dalende lijn.
+// Het trendgewicht (EMA) wordt hier client-side overheen gerekend, zoals in LiftLog.
+export const WEGINGEN: { datum: string; kg: number }[] = (() => {
+  const uit: { datum: string; kg: number }[] = [];
+  const dagen = 55;
+  for (let i = dagen; i >= 0; i--) {
+    if (i % 7 === 2 || i % 7 === 5) continue; // niet elke dag gewogen
+    const t = (dagen - i) / dagen;
+    const basis = 71.8 - 2.8 * t;
+    const schommel = 0.35 * Math.sin((dagen - i) * 1.7) + 0.18 * Math.sin((dagen - i) * 0.55);
+    uit.push({ datum: isoDag(dagenTerug(i)), kg: Math.round((basis + schommel) * 10) / 10 });
+  }
+  return uit;
+})();
 
 export const PRS = [
   { oefening: "Deadlift", kg: 100, datum: kortNL(dagenTerug(5)) },

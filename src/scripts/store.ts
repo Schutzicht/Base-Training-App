@@ -8,6 +8,7 @@ export type AppState = Record<string, unknown> & {
   gewichten?: Record<string, number>;
   maaltijdenDone?: Record<string, boolean[]>;
   water?: Record<string, number>;
+  wegingen?: Record<string, number>;
   trainingenAfgerond?: Record<string, string>;
   extraAfspraken?: { datum: string; tijd: string; type: string; status?: string }[];
   coachNotities?: Record<string, string>;
