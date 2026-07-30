@@ -332,3 +332,59 @@ export const CHALLENGE = {
 export function hoofdletter(tekst: string): string {
   return tekst.charAt(0).toUpperCase() + tekst.slice(1);
 }
+
+// Live in de studio: druktepatroon per uur (0-23) en wie er nu traint.
+// Patroon is voorbeelddata; de "nu"-waarde beweegt mee met het echte uur.
+export const DRUKTE_PATROON: number[] = [
+  0, 0, 0, 0, 0, 1, 2, 5, 6, 4, 3, 3, 4, 2, 2, 3, 4, 6, 7, 6, 4, 2, 1, 0,
+];
+
+export function drukteNu(): { aantal: number; label: string } {
+  const uur = new Date().getHours();
+  const aantal = DRUKTE_PATROON[uur] ?? 0;
+  const label = aantal <= 2 ? "rustig" : aantal <= 4 ? "rustig aan het worden" : "gezellig druk";
+  return { aantal, label };
+}
+
+export const NU_IN_STUDIO = ["Tim Verbeek", "Eva Schouten"];
+
+// Events buiten de deur waar BASE-leden samen naartoe werken.
+export type CommunityEvent = {
+  id: string;
+  naam: string;
+  type: "Hardlopen" | "Powerlifting";
+  wanneer: string;
+  plaats: string;
+  info: string;
+  deelnemers: number;
+};
+
+export const EVENTS: CommunityEvent[] = [
+  {
+    id: "kustmarathon",
+    naam: "Kustmarathon Zeeland",
+    type: "Hardlopen",
+    wanneer: "Oktober 2026",
+    plaats: "Zoutelande",
+    info: "Door de duinen en over het strand naar de finish in Zoutelande. Een groep BASE-leden traint er samen naartoe.",
+    deelnemers: 5,
+  },
+  {
+    id: "boulevardloop",
+    naam: "Boulevardloop Vlissingen",
+    type: "Hardlopen",
+    wanneer: "September 2026",
+    plaats: "Vlissingen",
+    info: "10 km door de binnenstad en over de boulevard, bij ons om de hoek. Mooi eerste doel.",
+    deelnemers: 3,
+  },
+  {
+    id: "powerliftmeet",
+    naam: "Regionale powerlifting meet",
+    type: "Powerlifting",
+    wanneer: "November 2026",
+    plaats: "Goes",
+    info: "Squat, bench en deadlift op het platform, ook voor eerste keer wedstrijd. Daan gaat mee als coach.",
+    deelnemers: 4,
+  },
+];

@@ -129,6 +129,18 @@ const bezetPct = Math.round((CAPACITEIT.bezet / CAPACITEIT.max) * 100);
       item.textContent = `Sanne Visser wil overstappen naar de split "${splitAanvragen[0]}".`;
       lijst.prepend(item);
     }
+    const eventNamen: Record<string, string> = {
+      kustmarathon: "de Kustmarathon Zeeland",
+      boulevardloop: "de Boulevardloop Vlissingen",
+      powerliftmeet: "de powerlifting meet in Goes",
+    };
+    Object.keys((state.eventDeelname as Record<string, boolean> | undefined) ?? {}).forEach((id) => {
+      const lijst = document.getElementById("activiteit-lijst")!;
+      const item = document.createElement("p");
+      item.className = "rounded-xl border border-volt/25 bg-volt/8 px-3.5 py-3 text-white";
+      item.textContent = `Sanne Visser heeft zich aangemeld voor ${eventNamen[id] ?? "een event"}.`;
+      lijst.prepend(item);
+    });
     if (state.buddyVerzoekStatus === "geaccepteerd") {
       const lijst = document.getElementById("activiteit-lijst")!;
       const item = document.createElement("p");

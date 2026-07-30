@@ -1,14 +1,45 @@
 ---
 import AppShell from "../../layouts/AppShell.astro";
-import { BUDDIES, INKOMEND_VERZOEK, COMMUNITY_FEED, SPLITS, CHALLENGE } from "../../data/demo";
+import { BUDDIES, INKOMEND_VERZOEK, COMMUNITY_FEED, SPLITS, CHALLENGE, EVENTS, DRUKTE_PATROON } from "../../data/demo";
 
 const challengePct = Math.round((CHALLENGE.nu / CHALLENGE.doel) * 100);
+
+// Rustigste momenten overdag (07:00-23:00) uit het druktepatroon.
+const rustigste = DRUKTE_PATROON.map((waarde, uur) => ({ uur, waarde }))
+  .filter((d) => d.uur >= 7 && d.uur <= 23)
+  .sort((a, b) => a.waarde - b.waarde)
+  .slice(0, 2)
+  .map((d) => `${String(d.uur).padStart(2, "0")}:00`)
+  .sort();
 ---
 
 <AppShell title="Community | BASE app" paginaTitel="Community" rol="lid">
   <section class="rise-in">
     <h2 class="display text-2xl font-extrabold">De BASE community</h2>
     <p class="mt-1 text-sm text-white/50">Klein gehouden, goed gematcht. Train samen, moedig elkaar aan en bouw aan dezelfde basis.</p>
+  </section>
+
+  <!-- Live in de studio -->
+  <section class="rise-in rise-in-1 mt-5 rounded-3xl border border-white/8 bg-coal-800 p-5 lg:p-6">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <span class="relative flex size-2.5">
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-volt opacity-60"></span>
+          <span class="relative inline-flex size-2.5 rounded-full bg-volt"></span>
+        </span>
+        <h3 class="display text-sm font-semibold text-white/85">Live in de studio</h3>
+      </div>
+      <span class="text-xs text-white/45">24/7 open</span>
+    </div>
+
+    <p class="mt-4 text-sm"><span class="display text-2xl font-extrabold" id="live-aantal">0</span> <span class="text-white/55"><span id="live-woord">leden</span> aan het trainen - <span id="live-label">rustig</span></span></p>
+    <p class="mt-1 text-xs text-white/45" id="live-bekenden"></p>
+
+    <div class="mt-4 flex h-16 items-end gap-1" id="drukte-balken" aria-hidden="true"></div>
+    <div class="mt-1.5 flex justify-between text-[10px] text-white/35 tabular-nums">
+      <span>07:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
+    </div>
+    <p class="mt-3 text-xs text-white/50">Rustigste momenten vandaag: <span class="font-semibold text-white/75">{rustigste.join(" en ")}</span>. Handig als je liever de ruimte hebt.</p>
   </section>
 
   <!-- Challenge van de maand -->
@@ -114,6 +145,32 @@ const challengePct = Math.round((CHALLENGE.nu / CHALLENGE.doel) * 100);
     </div>
   </section>
 
+  <!-- Events buiten de deur -->
+  <section class="rise-in rise-in-4 mt-8">
+    <h3 class="display text-sm font-semibold text-white/85">Samen op pad</h3>
+    <p class="mt-1 text-xs text-white/45">Marathons, loopjes en powerlifting meets waar BASE-leden samen naartoe werken. Sluit je aan en train er samen naartoe.</p>
+    <div class="mt-3 flex flex-col gap-3">
+      {
+        EVENTS.map((event) => (
+          <div class="rounded-2xl border border-white/8 bg-coal-800 p-5">
+            <div class="flex items-center justify-between gap-2">
+              <span class:list={["rounded-full px-2.5 py-1 text-[10px] font-semibold", event.type === "Powerlifting" ? "bg-volt/10 text-volt" : "bg-white/8 text-white/60"]}>{event.type}</span>
+              <span class="text-[11px] text-white/40">{event.wanneer} - {event.plaats}</span>
+            </div>
+            <h4 class="display mt-2.5 text-base font-bold">{event.naam}</h4>
+            <p class="mt-1 text-[13px] leading-relaxed text-white/60">{event.info}</p>
+            <div class="mt-4 flex items-center justify-between gap-3">
+              <p class="text-xs text-white/50"><span class="event-teller font-semibold text-white/80" data-event-teller={event.id}>{event.deelnemers}</span> BASE-leden doen mee</p>
+              <button type="button" class="event-knop shrink-0 rounded-xl border border-white/15 px-4 py-2 text-xs font-semibold transition-colors hover:border-volt/50" data-event={event.id} data-basis={event.deelnemers}>
+                Doe mee
+              </button>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
   <!-- Aanbevolen splits -->
   <section class="rise-in rise-in-4 mt-8">
     <h3 class="display text-sm font-semibold text-white/85">Aanbevolen splits</h3>
@@ -147,8 +204,54 @@ const challengePct = Math.round((CHALLENGE.nu / CHALLENGE.doel) * 100);
 
   <script>
     import { loadState, patchState } from "../../scripts/store";
+    import { DRUKTE_PATROON, NU_IN_STUDIO, drukteNu } from "../../data/demo";
 
     const state = loadState();
+
+    // Live in de studio: teller en druktegrafiek per uur (07:00-23:00), met het huidige uur in volt.
+    const nu = drukteNu();
+    document.getElementById("live-aantal")!.textContent = String(nu.aantal);
+    document.getElementById("live-woord")!.textContent = nu.aantal === 1 ? "lid" : "leden";
+    document.getElementById("live-label")!.textContent = nu.label;
+    const bekenden = document.getElementById("live-bekenden")!;
+    if (nu.aantal > 0) {
+      bekenden.textContent = `Nu aanwezig uit jouw groep: ${NU_IN_STUDIO.slice(0, Math.min(nu.aantal, NU_IN_STUDIO.length)).join(" en ")}.`;
+    } else {
+      bekenden.textContent = "De studio is nu leeg. Alle ruimte voor jou.";
+    }
+    const balken = document.getElementById("drukte-balken")!;
+    const maxDrukte = Math.max(...DRUKTE_PATROON);
+    const ditUur = new Date().getHours();
+    for (let uur = 7; uur <= 23; uur++) {
+      const balk = document.createElement("div");
+      const waarde = DRUKTE_PATROON[uur] ?? 0;
+      const hoogte = Math.max(8, Math.round((waarde / maxDrukte) * 100));
+      balk.className = `flex-1 rounded-t ${uur === ditUur ? "bg-volt" : uur < ditUur ? "bg-white/12" : "bg-white/25"}`;
+      balk.style.height = `${hoogte}%`;
+      balk.title = `${String(uur).padStart(2, "0")}:00`;
+      balken.appendChild(balk);
+    }
+
+    // Events: meedoen en teller bijwerken
+    const eventDeelname = (state.eventDeelname as Record<string, boolean> | undefined) ?? {};
+    document.querySelectorAll<HTMLButtonElement>(".event-knop").forEach((knop) => {
+      const id = knop.dataset.event!;
+      const basis = Number(knop.dataset.basis);
+      const teller = document.querySelector(`[data-event-teller="${id}"]`)!;
+      const zetMee = () => {
+        knop.textContent = "Je doet mee";
+        knop.className = "event-knop shrink-0 rounded-xl bg-volt px-4 py-2 text-xs font-bold text-coal-950";
+        knop.disabled = true;
+        teller.textContent = String(basis + 1);
+      };
+      if (eventDeelname[id]) zetMee();
+      knop.addEventListener("click", () => {
+        patchState((s) => {
+          (s as Record<string, unknown>).eventDeelname = { ...((s.eventDeelname as object) ?? {}), [id]: true };
+        });
+        zetMee();
+      });
+    });
 
     // Buddy opt-in toggle
     const toggle = document.getElementById("buddy-toggle")!;
