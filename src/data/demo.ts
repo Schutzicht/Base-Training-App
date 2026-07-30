@@ -140,6 +140,51 @@ function reeks(start: number, stappen: number[], weekAfstand = 7): { datum: stri
   });
 }
 
+// Gedetailleerde spiergroepen met Nederlandse en Engelse zoektermen.
+// Weergavenamen volgen gangbare gym-taal (Engels), zoeken werkt in beide talen.
+export const SPIEREN: Record<string, { naam: string; zoek: string[] }> = {
+  "upper-chest": { naam: "Upper chest", zoek: ["bovenborst", "borst", "chest", "upper chest", "pecs", "pectoralis"] },
+  "mid-chest": { naam: "Mid chest", zoek: ["middenborst", "borst", "chest", "mid chest", "middle chest", "pecs", "pectoralis"] },
+  "lower-chest": { naam: "Lower chest", zoek: ["onderborst", "borst", "chest", "lower chest", "pecs"] },
+  "front-delts": { naam: "Front delts", zoek: ["voorste schouderkop", "voorkant schouder", "schouders", "front delts", "anterior deltoid", "delts", "shoulders"] },
+  "side-delts": { naam: "Side delts", zoek: ["zijkant schouder", "schouders", "side delts", "lateral deltoid", "delts", "shoulders"] },
+  "rear-delts": { naam: "Rear delts", zoek: ["achterste schouderkop", "achterkant schouder", "schouders", "rear delts", "posterior deltoid", "delts", "shoulders"] },
+  lats: { naam: "Lats", zoek: ["lats", "latissimus", "brede rugspier", "rug", "back"] },
+  "upper-back": { naam: "Upper back", zoek: ["bovenrug", "rug", "upper back", "rhomboids", "mid traps", "back"] },
+  traps: { naam: "Traps", zoek: ["traps", "trapezius", "monnikskapspier", "nek"] },
+  "lower-back": { naam: "Lower back", zoek: ["onderrug", "rug", "lower back", "rugstrekkers", "erectors", "spinal erectors", "back"] },
+  biceps: { naam: "Biceps", zoek: ["biceps", "armen", "arms"] },
+  triceps: { naam: "Triceps", zoek: ["triceps", "armen", "arms"] },
+  forearms: { naam: "Forearms", zoek: ["onderarmen", "forearms", "grip", "grijpkracht"] },
+  quads: { naam: "Quads", zoek: ["quadriceps", "quads", "bovenbenen", "benen", "dijen", "legs"] },
+  hamstrings: { naam: "Hamstrings", zoek: ["hamstrings", "achterkant benen", "benen", "legs"] },
+  glutes: { naam: "Glutes", zoek: ["glutes", "bilspieren", "billen", "gluteus"] },
+  adductors: { naam: "Adductors", zoek: ["adductoren", "adductors", "binnenkant dij", "liezen"] },
+  calves: { naam: "Calves", zoek: ["kuiten", "calves"] },
+  abs: { naam: "Abs", zoek: ["buikspieren", "abs", "core", "sixpack", "rechte buikspier"] },
+  obliques: { naam: "Obliques", zoek: ["schuine buikspieren", "obliques", "core"] },
+  "rotator-cuff": { naam: "Rotator cuff", zoek: ["rotator cuff", "cuff", "schouderstabilisatoren", "infraspinatus", "externe rotatoren"] },
+};
+
+// Primaire en secundaire spieren per oefening, op basis van EMG-onderzoek en gangbare
+// classificaties (o.a. Rodríguez-Ridao 2020 voor drukhoeken, Stronger by Science voor de squat).
+export const OEFENING_SPIEREN: Record<string, { primair: string[]; secundair: string[] }> = {
+  squat: { primair: ["quads", "glutes"], secundair: ["adductors", "lower-back", "abs"] },
+  rdl: { primair: ["hamstrings", "glutes"], secundair: ["lower-back", "adductors", "forearms"] },
+  splitsquat: { primair: ["quads", "glutes"], secundair: ["adductors", "hamstrings", "abs"] },
+  legcurl: { primair: ["hamstrings"], secundair: ["calves"] },
+  plank: { primair: ["abs"], secundair: ["obliques", "front-delts", "glutes"] },
+  bench: { primair: ["mid-chest", "lower-chest"], secundair: ["upper-chest", "front-delts", "triceps"] },
+  pullup: { primair: ["lats"], secundair: ["biceps", "upper-back", "rear-delts", "forearms"] },
+  ohp: { primair: ["front-delts"], secundair: ["side-delts", "triceps", "traps", "upper-chest"] },
+  row: { primair: ["upper-back"], secundair: ["lats", "biceps", "rear-delts", "forearms"] },
+  facepull: { primair: ["rear-delts"], secundair: ["upper-back", "traps", "rotator-cuff"] },
+  deadlift: { primair: ["glutes", "hamstrings", "lower-back"], secundair: ["quads", "traps", "forearms", "lats"] },
+  pushpress: { primair: ["front-delts"], secundair: ["side-delts", "triceps", "quads", "traps"] },
+  goblet: { primair: ["quads"], secundair: ["glutes", "adductors", "abs", "upper-back"] },
+  carry: { primair: ["forearms", "traps"], secundair: ["abs", "obliques", "glutes"] },
+};
+
 export type OefeningVerloop = { naam: string; eenheid: "kg" | "reps" | "sec"; punten: { datum: string; kg: number }[] };
 
 export const KRACHT_VERLOOP: Record<string, OefeningVerloop> = {

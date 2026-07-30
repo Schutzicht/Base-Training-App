@@ -26,6 +26,7 @@ import { PRS } from "../../data/demo";
     </label>
     <div class="-mx-1 mt-3 flex gap-2 overflow-x-auto no-scrollbar px-1 pb-1" id="kracht-keuze"></div>
     <p id="oefening-leeg" class="mt-1 hidden text-xs text-white/40">Geen oefening gevonden.</p>
+    <p id="spier-detail" class="mt-2 text-xs leading-relaxed text-white/45"></p>
     <div class="relative mt-4" id="kracht-grafiek"></div>
     <p class="mt-5 text-xs font-medium text-white/45">Laatste sessies</p>
     <div class="mt-2 flex flex-col gap-2" id="kracht-sessies"></div>
@@ -76,7 +77,7 @@ import { PRS } from "../../data/demo";
   </section>
 
   <script>
-    import { KRACHT_VERLOOP, WEGINGEN, SCHEMA } from "../../data/demo";
+    import { KRACHT_VERLOOP, WEGINGEN, SCHEMA, SPIEREN, OEFENING_SPIEREN } from "../../data/demo";
     import { loadState, patchState, dateKey } from "../../scripts/store";
 
     type Punt = { datum: string; kg: number };
@@ -297,6 +298,18 @@ import { PRS } from "../../data/demo";
         knop.className = `shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${aan ? "bg-volt text-coal-950" : "bg-coal-950 text-white/60 border border-white/10 hover:text-white"}`;
       });
 
+      // Primaire en secundaire spieren van de gekozen oefening
+      const spieren = OEFENING_SPIEREN[actief];
+      const detailEl = document.getElementById("spier-detail")!;
+      if (spieren) {
+        const namen = (lijst: string[]) => lijst.map((id) => SPIEREN[id]?.naam ?? id).join(", ");
+        detailEl.innerHTML =
+          `<span class="font-semibold text-volt/90">Primair:</span> ${namen(spieren.primair)}` +
+          `<span class="mx-1.5 text-white/25">·</span><span class="font-semibold text-white/60">Secundair:</span> ${namen(spieren.secundair)}`;
+      } else {
+        detailEl.innerHTML = "";
+      }
+
       // Laatste sessies: nieuwste boven, met verschil ten opzichte van de sessie ervoor
       const info = oefInfo[actief];
       sessiesEl.innerHTML = "";
@@ -318,11 +331,24 @@ import { PRS } from "../../data/demo";
       }
     }
 
+    // Zoektermen per oefening: naam en grove groep, plus alle aliassen (NL en EN) van de
+    // primaire en secundaire spieren. "chest" of "borst" vindt zo alle drukoefeningen,
+    // "front delts" ook de presses waar die primair meewerken.
+    function zoektermen(sleutel: string): { primair: string; secundair: string } {
+      const spieren = OEFENING_SPIEREN[sleutel];
+      const alias = (ids: string[]) => ids.flatMap((id) => [SPIEREN[id]?.naam ?? id, ...(SPIEREN[id]?.zoek ?? [])]);
+      const primair = [KRACHT_VERLOOP[sleutel]!.naam, oefInfo[sleutel]?.spiergroep ?? "", ...alias(spieren?.primair ?? [])];
+      const secundair = alias(spieren?.secundair ?? []);
+      return { primair: primair.join(" ").toLowerCase(), secundair: secundair.join(" ").toLowerCase() };
+    }
+
     sleutels.forEach((sleutel) => {
       const knop = document.createElement("button");
       knop.type = "button";
       knop.dataset.sleutel = sleutel;
-      knop.dataset.zoektekst = `${KRACHT_VERLOOP[sleutel]!.naam} ${oefInfo[sleutel]?.spiergroep ?? ""}`.toLowerCase();
+      const termen = zoektermen(sleutel);
+      knop.dataset.zoekPrimair = termen.primair;
+      knop.dataset.zoekSecundair = termen.secundair;
       knop.textContent = KRACHT_VERLOOP[sleutel]!.naam;
       knop.addEventListener("click", () => {
         actief = sleutel;
@@ -332,19 +358,31 @@ import { PRS } from "../../data/demo";
     });
     toonKracht();
 
-    // Zoeken op oefening of spiergroep filtert de keuzeknoppen
+    // Zoeken filtert de keuzeknoppen: primaire treffers eerst, secundaire gedimd erachter
     const zoekInput = document.getElementById("oefening-zoek") as HTMLInputElement;
     const leegEl = document.getElementById("oefening-leeg")!;
     zoekInput.addEventListener("input", () => {
       const term = zoekInput.value.trim().toLowerCase();
-      let zichtbaar = 0;
+      const primairRaak: HTMLButtonElement[] = [];
+      const secundairRaak: HTMLButtonElement[] = [];
       [...keuzeEl.children].forEach((kind) => {
         const knop = kind as HTMLButtonElement;
-        const raak = knop.dataset.zoektekst!.includes(term);
-        knop.style.display = raak ? "" : "none";
-        if (raak) zichtbaar++;
+        const inPrimair = knop.dataset.zoekPrimair!.includes(term);
+        const inSecundair = !inPrimair && knop.dataset.zoekSecundair!.includes(term);
+        knop.style.display = inPrimair || inSecundair ? "" : "none";
+        knop.style.opacity = term && inSecundair ? "0.55" : "";
+        if (inPrimair) primairRaak.push(knop);
+        else if (inSecundair) secundairRaak.push(knop);
       });
-      leegEl.classList.toggle("hidden", zichtbaar > 0);
+      if (term) {
+        [...primairRaak, ...secundairRaak].forEach((knop) => keuzeEl.appendChild(knop));
+      } else {
+        sleutels.forEach((s) => {
+          const knop = keuzeEl.querySelector(`[data-sleutel="${s}"]`);
+          if (knop) keuzeEl.appendChild(knop);
+        });
+      }
+      leegEl.classList.toggle("hidden", primairRaak.length + secundairRaak.length > 0);
     });
 
     // Gekozen chip in beeld brengen als je via de trainingspagina binnenkomt
