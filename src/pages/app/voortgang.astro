@@ -66,7 +66,7 @@ import { PRS } from "../../data/demo";
           <div class="rounded-2xl border border-white/8 bg-coal-800 p-4">
             <p class="text-xs text-white/50">{pr.oefening}</p>
             <p class="display mt-1 text-2xl font-extrabold">
-              {pr.kg}
+              <span data-pr={pr.oefening}>{pr.kg}</span>
               <span class="text-sm font-semibold text-white/40"> {"eenheid" in pr ? pr.eenheid : "kg"}</span>
             </p>
             <p class="mt-1 text-[11px] text-white/40">{pr.datum}</p>
@@ -79,6 +79,9 @@ import { PRS } from "../../data/demo";
   <script>
     import { KRACHT_VERLOOP, WEGINGEN, SCHEMA, SPIEREN, OEFENING_SPIEREN } from "../../data/demo";
     import { loadState, patchState, dateKey } from "../../scripts/store";
+
+    function init(): void {
+      if (!document.querySelector("#kracht-grafiek")) return;
 
     type Punt = { datum: string; kg: number };
 
@@ -446,5 +449,30 @@ import { PRS } from "../../data/demo";
       weegInput.blur();
       toonGewicht();
     });
+    }
+    document.addEventListener("astro:page-load", init);
+  </script>
+
+  <script>
+    import { loadState } from "../../scripts/store";
+
+    // Records die tijdens een training zijn verbeterd, meenemen in de PR-kaarten.
+    const NAAM_PER_ID: Record<string, string> = { squat: "Back squat", bench: "Bench press", deadlift: "Deadlift" };
+
+    function initEigenPrs(): void {
+      if (!document.querySelector("[data-pr]")) return;
+      const eigen = (loadState().eigenPrs as Record<string, number> | undefined) ?? {};
+      Object.entries(eigen).forEach(([id, kg]) => {
+        const naam = NAAM_PER_ID[id];
+        if (!naam) return;
+        document.querySelectorAll<HTMLElement>("[data-pr]").forEach((el) => {
+          if (el.dataset.pr === naam && kg > Number(el.textContent!.replace(",", "."))) {
+            el.textContent = String(kg);
+            el.closest(".rounded-2xl")?.classList.add("border-volt/40");
+          }
+        });
+      });
+    }
+    document.addEventListener("astro:page-load", initEigenPrs);
   </script>
 </AppShell>

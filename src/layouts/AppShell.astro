@@ -28,6 +28,10 @@ const iconen: Record<string, string> = {
     '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.5" r="2.5"/><path d="M15.6 14.7c2.6.1 4.4 1.8 4.9 4.3"/>',
   agenda:
     '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/><path d="M8.5 14.5l2.2 2.2 4.6-4.6"/>',
+  scan:
+    '<path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M4 12h16"/>',
+  chat:
+    '<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.2 0-2.4-.25-3.4-.7L4 20.5l1.2-4.1A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.5 10.5h7M8.5 13.5h4.5"/>',
 };
 
 type NavItem = { href: string; label: string; icoon: string; center?: boolean; alleenDesktop?: boolean };
@@ -38,13 +42,16 @@ const lidNav: NavItem[] = [
   { href: "/app/toegang/", label: "Toegang", icoon: "toegang", center: true },
   { href: "/app/community/", label: "Community", icoon: "leden" },
   { href: "/app/voeding/", label: "Voeding", icoon: "voeding", alleenDesktop: true },
+  { href: "/app/berichten/", label: "Berichten", icoon: "chat", alleenDesktop: true },
   { href: "/app/voortgang/", label: "Voortgang", icoon: "voortgang" },
 ];
 
 const coachNav: NavItem[] = [
   { href: "/coach/", label: "Overzicht", icoon: "overzicht" },
   { href: "/coach/leden/", label: "Leden", icoon: "leden" },
+  { href: "/coach/scanner/", label: "Scanner", icoon: "scan", center: true },
   { href: "/coach/agenda/", label: "Agenda", icoon: "agenda" },
+  { href: "/coach/berichten/", label: "Berichten", icoon: "chat" },
 ];
 
 const nav = rol === "lid" ? lidNav : coachNav;
@@ -64,7 +71,7 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
 <BaseLayout title={title}>
   <div class="min-h-svh lg:grid lg:grid-cols-[264px_1fr]">
     <!-- Sidebar desktop -->
-    <aside class="hidden lg:flex flex-col border-r border-white/8 bg-coal-900 px-5 pt-7 pb-5 sticky top-0 h-svh">
+    <aside class="hidden lg:flex flex-col border-r border-white/8 bg-coal-900 px-5 pt-7 pb-5 sticky top-0 h-svh" transition:name="zijbalk" transition:animate="none">
       <a href="/" class="flex items-center gap-3 px-2">
         <img src="/img/logo-base-wit.png" alt="BASE Training" class="h-6 w-auto" />
       </a>
@@ -114,19 +121,29 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
 
     <div class="flex min-h-svh flex-col">
       <!-- Frosted header mobiel. Zelfde opzet als de tabbar: blur in een eigen laag tegen iOS-scrollglitches. -->
-      <header class="lg:hidden sticky top-0 z-40 pt-safe [transform:translateZ(0)]">
+      <header class="lg:hidden sticky top-0 z-40 pt-safe [transform:translateZ(0)]" transition:name="kopbalk" transition:animate="none">
         <div aria-hidden="true" class="absolute inset-0 border-b border-white/8 bg-coal-950/75 backdrop-blur-xl"></div>
         <div class="relative flex h-14 items-center justify-between px-5">
           <a href="/" class="flex items-center">
             <img src="/img/logo-base-wit.png" alt="BASE Training" class="h-4.5 w-auto" />
           </a>
           <span class="display text-sm font-semibold text-white/85">{paginaTitel}</span>
-          <a
-            href={rol === "lid" ? "/app/profiel/" : "/"}
-            aria-label={rol === "lid" ? "Jouw profiel" : "Wissel van rol"}
-            class="grid size-8 place-items-center overflow-hidden rounded-full bg-volt text-coal-950 font-display font-bold text-[11px] transition-transform duration-150 ease-snap active:scale-90"
-            data-avatar={rol === "lid" ? "" : undefined}
-          >{initialen}</a>
+          <div class="flex items-center gap-3">
+            {
+              rol === "lid" && (
+                <a href="/app/berichten/" aria-label="Berichten van Daan" class="relative grid size-8 place-items-center rounded-full bg-white/8 text-white/75 transition-transform duration-150 ease-snap active:scale-90">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-4.5" set:html={iconen.chat} />
+                  <span data-chat-dot class="absolute right-0 top-0 hidden size-2.5 rounded-full border-2 border-coal-950 bg-volt" />
+                </a>
+              )
+            }
+            <a
+              href={rol === "lid" ? "/app/profiel/" : "/"}
+              aria-label={rol === "lid" ? "Jouw profiel" : "Wissel van rol"}
+              class="grid size-8 place-items-center overflow-hidden rounded-full bg-volt text-coal-950 font-display font-bold text-[11px] transition-transform duration-150 ease-snap active:scale-90"
+              data-avatar={rol === "lid" ? "" : undefined}
+            >{initialen}</a>
+          </div>
         </div>
       </header>
 
@@ -145,7 +162,7 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
 
   <!-- Tabbar mobiel. De blur zit bewust in een eigen laag (niet op het fixed element zelf):
        iOS Safari laat een fixed element met backdrop-filter anders soms "zweven" tijdens scrollen. -->
-  <nav class="lg:hidden fixed inset-x-0 bottom-0 z-40 pb-safe [transform:translateZ(0)]">
+  <nav class="lg:hidden fixed inset-x-0 bottom-0 z-40 pb-safe [transform:translateZ(0)]" transition:name="tabbar" transition:animate="none" data-rol={rol}>
     <div aria-hidden="true" class="absolute inset-0 bg-coal-950/65 backdrop-blur-2xl backdrop-saturate-150 [box-shadow:0_-0.5px_0_rgba(255,255,255,0.14),0_-12px_32px_rgba(0,0,0,0.45)]"></div>
     <div class="relative mx-auto flex max-w-md items-stretch justify-around px-2">
       {
@@ -169,16 +186,19 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
                 isActief(item.href) ? "text-volt" : "text-white/50",
               ]}
             >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="size-5.5 transition-transform duration-150 ease-snap group-active:scale-85"
-                set:html={iconen[item.icoon]}
-              />
+              <span class="relative">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="size-5.5 transition-transform duration-150 ease-snap group-active:scale-85"
+                  set:html={iconen[item.icoon]}
+                />
+                {item.icoon === "chat" && <span data-chat-dot class="absolute -right-1 -top-0.5 hidden size-2.5 rounded-full border-2 border-coal-950 bg-volt" />}
+              </span>
               {item.label}
             </a>
           ),
@@ -187,27 +207,43 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
     </div>
   </nav>
 
-  {
-    rol === "lid" && (
-      <script>
-        // Personalisatie: eigen naam en foto uit het profiel tonen in de shell.
-        try {
-          const profiel = (JSON.parse(localStorage.getItem("base-app-demo-v1") ?? "{}").profiel ?? {}) as { naam?: string; foto?: string };
-          if (profiel.naam) {
-            const delen = profiel.naam.trim().split(/\s+/);
-            const initialen = (delen[0]?.[0] ?? "") + (delen[1]?.[0] ?? "");
-            document.querySelectorAll("[data-avatar]").forEach((el) => {
-              if (!profiel.foto) el.textContent = initialen.toUpperCase();
-            });
-            document.querySelectorAll("[data-profiel-naam]").forEach((el) => (el.textContent = profiel.naam!));
-          }
-          if (profiel.foto) {
-            document.querySelectorAll("[data-avatar]").forEach((el) => {
-              el.innerHTML = `<img src="${profiel.foto}" alt="" class="size-full object-cover" />`;
-            });
-          }
-        } catch {}
-      </script>
-    )
-  }
+  <script>
+    import { chatSeed } from "../data/demo";
+
+    // Shell-personalisatie (naam en foto) plus ongelezen-stip voor berichten.
+    function init(): void {
+      const navEl = document.querySelector<HTMLElement>("nav[data-rol]");
+      if (!navEl) return;
+      const rol = navEl.dataset.rol as "lid" | "coach";
+      let state: Record<string, unknown> = {};
+      try {
+        state = JSON.parse(localStorage.getItem("base-app-demo-v1") ?? "{}");
+      } catch {}
+
+      if (rol === "lid") {
+        const profiel = (state.profiel ?? {}) as { naam?: string; foto?: string };
+        if (profiel.naam) {
+          const delen = profiel.naam.trim().split(/\s+/);
+          const initialen = ((delen[0]?.[0] ?? "") + (delen[1]?.[0] ?? "")).toUpperCase();
+          document.querySelectorAll("[data-avatar]").forEach((el) => {
+            if (!profiel.foto) el.textContent = initialen;
+          });
+          document.querySelectorAll("[data-profiel-naam]").forEach((el) => (el.textContent = profiel.naam!));
+        }
+        if (profiel.foto) {
+          document.querySelectorAll("[data-avatar]").forEach((el) => {
+            el.innerHTML = `<img src="${profiel.foto}" alt="" class="size-full object-cover" />`;
+          });
+        }
+      }
+
+      const extra = (state.chatBerichten ?? []) as { van: string; tijd: string }[];
+      const alle = [...chatSeed(), ...extra];
+      const laatsteVanAnder = [...alle].reverse().find((b) => b.van !== rol);
+      const gelezen = (state.chatGelezen as Record<string, string> | undefined)?.[rol];
+      const ongelezen = !!laatsteVanAnder && (!gelezen || gelezen < laatsteVanAnder.tijd);
+      document.querySelectorAll("[data-chat-dot]").forEach((el) => el.classList.toggle("hidden", !ongelezen));
+    }
+    document.addEventListener("astro:page-load", init);
+  </script>
 </BaseLayout>

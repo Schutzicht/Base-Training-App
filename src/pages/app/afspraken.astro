@@ -68,6 +68,9 @@ import { AFSPRAKEN, VRIJE_SLOTEN, langNL, kortNL, hoofdletter } from "../../data
   <script>
     import { loadState, patchState } from "../../scripts/store";
 
+    function init(): void {
+      if (!document.querySelector("#boek-overlay")) return;
+
     const lijst = document.getElementById("afspraken-lijst")!;
     const overlay = document.getElementById("boek-overlay")!;
     const boekTekst = document.getElementById("boek-tekst")!;
@@ -122,5 +125,7 @@ import { AFSPRAKEN, VRIJE_SLOTEN, langNL, kortNL, hoofdletter } from "../../data
       overlay.classList.add("hidden");
       overlay.classList.remove("flex");
     });
+    }
+    document.addEventListener("astro:page-load", init);
   </script>
 </AppShell>

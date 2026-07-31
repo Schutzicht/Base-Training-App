@@ -46,6 +46,9 @@ import { LID } from "../../data/demo";
     import QRCode from "qrcode";
     import { LID } from "../../data/demo";
 
+    function init(): void {
+      if (!document.querySelector("#qr-canvas")) return;
+
     const canvas = document.getElementById("qr-canvas") as HTMLCanvasElement;
     const teller = document.getElementById("qr-teller")!;
     const balk = document.getElementById("qr-balk")!;
@@ -63,12 +66,17 @@ import { LID } from "../../data/demo";
     }
 
     tekenQr();
-    setInterval(() => {
+    // Een lopende teller van een vorig bezoek eerst stoppen (view transitions herladen de pagina niet)
+    const globaal = window as unknown as { qrTeller?: ReturnType<typeof setInterval> };
+    if (globaal.qrTeller) clearInterval(globaal.qrTeller);
+    globaal.qrTeller = setInterval(() => {
       const inSlot = Math.floor((Date.now() / 1000) % VENSTER);
       const rest = VENSTER - inSlot;
       teller.textContent = `${rest} sec`;
       balk.style.width = `${(rest / VENSTER) * 100}%`;
       if (inSlot === 0) tekenQr();
     }, 1000);
+    }
+    document.addEventListener("astro:page-load", init);
   </script>
 </AppShell>

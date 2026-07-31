@@ -53,6 +53,9 @@ const trendStijl: Record<string, string> = {
   <p id="geen-resultaat" class="mt-6 hidden text-center text-sm text-white/40">Geen leden gevonden.</p>
 
   <script>
+
+    function init(): void {
+      if (!document.querySelector("#zoek")) return;
     const zoek = document.getElementById("zoek") as HTMLInputElement;
     const kaarten = [...document.querySelectorAll<HTMLElement>(".lid-kaart")];
     const leeg = document.getElementById("geen-resultaat")!;
@@ -66,5 +69,7 @@ const trendStijl: Record<string, string> = {
       });
       leeg.classList.toggle("hidden", zichtbaar > 0);
     });
+    }
+    document.addEventListener("astro:page-load", init);
   </script>
 </AppShell>

@@ -11,6 +11,7 @@
     "@fontsource/kanit": "^5.2.5",
     "@tailwindcss/vite": "^4.1.11",
     "astro": "^6.1.0",
+    "jsqr": "^1.4.0",
     "qrcode": "^1.5.4",
     "tailwindcss": "^4.1.11"
   },

@@ -75,6 +75,9 @@ const week = Array.from({ length: 7 }, (_, i) => {
   <script>
     import { loadState, patchState } from "../../scripts/store";
 
+    function init(): void {
+      if (!document.querySelector("[data-dag-iso]")) return;
+
     // Sessie-aanvragen van leden (uit de demo: Sanne) tonen met een bevestig-knop.
     type Aanvraag = { datum: string; tijd: string; type: string; status?: string };
     const state = loadState();
@@ -117,5 +120,7 @@ const week = Array.from({ length: 7 }, (_, i) => {
       kaart.appendChild(knop);
       sectie.appendChild(kaart);
     });
+    }
+    document.addEventListener("astro:page-load", init);
   </script>
 </AppShell>

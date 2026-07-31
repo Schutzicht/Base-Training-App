@@ -17,7 +17,7 @@ const initialen = lid.naam.split(" ").map((n) => n[0]).join("");
     Alle leden
   </a>
 
-  <section class="rise-in mt-4 flex flex-wrap items-center gap-5 rounded-3xl border border-white/8 bg-coal-800 p-6">
+  <section id="lid-profiel" class="rise-in mt-4 flex flex-wrap items-center gap-5 rounded-3xl border border-white/8 bg-coal-800 p-6">
     <span class="grid size-16 place-items-center rounded-2xl bg-volt font-display text-xl font-bold text-coal-950">{initialen}</span>
     <div class="min-w-0 flex-1">
       <h2 class="display text-2xl font-extrabold">{lid.naam}</h2>
@@ -135,6 +135,9 @@ const initialen = lid.naam.split(" ").map((n) => n[0]).join("");
 
   <script>
     import { loadState, patchState } from "../../../scripts/store";
+
+    function init(): void {
+      if (!document.querySelector("#lid-profiel")) return;
 
     const state = loadState();
     const melding = document.getElementById("opgeslagen-melding");
@@ -297,5 +300,7 @@ const initialen = lid.naam.split(" ").map((n) => n[0]).join("");
         }, 500);
       });
     }
+    }
+    document.addEventListener("astro:page-load", init);
   </script>
 </AppShell>

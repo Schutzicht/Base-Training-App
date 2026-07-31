@@ -83,6 +83,9 @@ const { doelen, maaltijden, waterDoel } = VOEDING;
   <script>
     import { loadState, patchState, dateKey } from "../../scripts/store";
 
+    function init(): void {
+      if (!document.querySelector("#water-rij")) return;
+
     const vandaag = dateKey();
     const state = loadState();
 
@@ -159,5 +162,7 @@ const { doelen, maaltijden, waterDoel } = VOEDING;
       }
     }
     toonWater();
+    }
+    document.addEventListener("astro:page-load", init);
   </script>
 </AppShell>

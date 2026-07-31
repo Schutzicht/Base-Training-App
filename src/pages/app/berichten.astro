@@ -1,0 +1,97 @@
+---
+import AppShell from "../../layouts/AppShell.astro";
+---
+
+<AppShell title="Berichten | BASE app" paginaTitel="Berichten" rol="lid">
+  <section class="rise-in flex items-center gap-3">
+    <span class="grid size-11 shrink-0 place-items-center rounded-full bg-volt font-display text-sm font-bold text-coal-950">DA</span>
+    <div>
+      <h2 class="display text-lg font-extrabold leading-tight">Coach Daan</h2>
+      <p class="text-xs text-white/50">Jouw trainer - reageert meestal dezelfde dag</p>
+    </div>
+  </section>
+
+  <div class="rise-in rise-in-1 mt-5 flex flex-col gap-2.5 pb-24" id="chat-lijst" data-chat-rol="lid"></div>
+
+  <!-- Invoer -->
+  <div class="sticky bottom-24 z-30 lg:bottom-6">
+    <form id="chat-form" class="flex items-center gap-2 rounded-2xl border border-white/10 bg-coal-900/95 p-2 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
+      <input
+        type="text"
+        id="chat-invoer"
+        placeholder="Stuur Daan een bericht"
+        autocomplete="off"
+        class="min-w-0 flex-1 bg-transparent px-3 text-sm placeholder:text-white/35 focus:outline-none"
+      />
+      <button type="submit" aria-label="Verstuur" class="grid size-10 shrink-0 place-items-center rounded-xl bg-volt text-coal-950 transition-transform duration-150 ease-snap active:scale-90">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M4.5 12L19 4.5 15.5 19l-4-5.5z"/><path d="M11.5 13.5L19 4.5"/></svg>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    import { loadState, patchState } from "../../scripts/store";
+    import { chatSeed, type ChatBericht } from "../../data/demo";
+
+    function init(): void {
+      const lijst = document.getElementById("chat-lijst");
+      if (!lijst) return;
+      const rol = (lijst.dataset.chatRol ?? "lid") as "lid" | "coach";
+
+      function alleBerichten(): ChatBericht[] {
+        const extra = (loadState().chatBerichten as ChatBericht[] | undefined) ?? [];
+        return [...chatSeed(), ...extra].sort((a, b) => a.tijd.localeCompare(b.tijd));
+      }
+
+      function tijdLabel(iso: string): string {
+        const d = new Date(iso);
+        const vandaag = new Date();
+        const zelfde = d.toDateString() === vandaag.toDateString();
+        const tijd = d.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+        return zelfde ? tijd : `${d.toLocaleDateString("nl-NL", { weekday: "short" })} ${tijd}`;
+      }
+
+      function render(): void {
+        lijst!.innerHTML = "";
+        alleBerichten().forEach((bericht) => {
+          const eigen = bericht.van === rol;
+          const rij = document.createElement("div");
+          rij.className = `flex flex-col ${eigen ? "items-end" : "items-start"}`;
+          rij.innerHTML = `
+            <div class="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              eigen ? "rounded-br-md bg-volt text-coal-950" : "rounded-bl-md bg-coal-700 text-white"
+            }">${bericht.tekst.replace(/</g, "&lt;")}</div>
+            <span class="mt-1 px-1 text-[10px] text-white/30">${tijdLabel(bericht.tijd)}</span>`;
+          lijst!.appendChild(rij);
+        });
+        lijst!.lastElementChild?.scrollIntoView({ block: "end" });
+      }
+
+      function markeerGelezen(): void {
+        patchState((s) => {
+          (s as Record<string, unknown>).chatGelezen = { ...((s.chatGelezen as object) ?? {}), [rol]: new Date().toISOString() };
+        });
+        document.querySelectorAll("[data-chat-dot]").forEach((el) => el.classList.add("hidden"));
+      }
+
+      render();
+      markeerGelezen();
+
+      const form = document.getElementById("chat-form") as HTMLFormElement;
+      const invoer = document.getElementById("chat-invoer") as HTMLInputElement;
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const tekst = invoer.value.trim();
+        if (!tekst) return;
+        patchState((s) => {
+          const huidig = (s.chatBerichten as ChatBericht[] | undefined) ?? [];
+          (s as Record<string, unknown>).chatBerichten = [...huidig, { van: rol, tekst, tijd: new Date().toISOString() }];
+        });
+        invoer.value = "";
+        render();
+        markeerGelezen();
+      });
+    }
+    document.addEventListener("astro:page-load", init);
+  </script>
+</AppShell>

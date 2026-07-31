@@ -98,6 +98,9 @@ const bezetPct = Math.round((CAPACITEIT.bezet / CAPACITEIT.max) * 100);
   <script>
     import { loadState, dateKey } from "../../scripts/store";
 
+    function init(): void {
+      if (!document.querySelector("#activiteit-lijst")) return;
+
     const nu = new Date();
     const uur = nu.getHours();
     document.getElementById("groet")!.textContent = uur < 12 ? "Goedemorgen" : uur < 18 ? "Goedemiddag" : "Goedenavond";
@@ -148,5 +151,7 @@ const bezetPct = Math.round((CAPACITEIT.bezet / CAPACITEIT.max) * 100);
       item.textContent = "Sanne Visser en Lotte Maas zijn nu trainbuddies.";
       lijst.appendChild(item);
     }
+    }
+    document.addEventListener("astro:page-load", init);
   </script>
 </AppShell>

@@ -145,8 +145,32 @@ function progressieVan(id: string): { tekst: string; delta: number } | null {
     </div>
   </div>
 
+  <!-- Nieuw record -->
+  <div id="pr-overlay" class="pointer-events-none fixed inset-0 z-[70] hidden items-center justify-center px-6">
+    <div id="pr-kaart" class="scale-95 rounded-3xl border border-volt/40 bg-coal-900/95 px-8 py-7 text-center opacity-0 backdrop-blur-xl volt-glow transition-[transform,opacity] duration-200 ease-snap">
+      <div class="mx-auto grid size-12 place-items-center rounded-full bg-volt text-coal-950">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="size-6"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 5.5H4.5a2.5 2.5 0 0 0 2.6 4M17 5.5h2.5a2.5 2.5 0 0 1-2.6 4"/></svg>
+      </div>
+      <p class="mt-3 font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-volt">Nieuw record</p>
+      <p class="display mt-1 text-2xl font-extrabold" id="pr-tekst"></p>
+    </div>
+  </div>
+
   <script>
     import { loadState, patchState, dateKey } from "../../scripts/store";
+    import { KRACHT_VERLOOP } from "../../data/demo";
+
+    type SetLog = { kg: number | null; reps: number; done: boolean };
+
+    // PR-detectie alleen voor de hoofdoefeningen met een bekende basis.
+    const PR_BASIS: Record<string, { naam: string; kg: number }> = {
+      squat: { naam: "Back squat", kg: 80 },
+      bench: { naam: "Bench press", kg: 62.5 },
+      deadlift: { naam: "Deadlift", kg: 100 },
+    };
+
+    function init(): void {
+      if (!document.querySelector("#rust-timer")) return;
 
     const state = loadState();
     const vandaagKey = dateKey();
@@ -204,13 +228,56 @@ function progressieVan(id: string): { tekst: string; delta: number } | null {
 
     document.getElementById("rust-skip")!.addEventListener("click", stopRust);
 
-    // Oefeningkaarten opbouwen: overrides van de trainer + set-chips + gewichten
+    // Nieuw record vieren
+    function vierPr(oefId: string, kg: number): void {
+      const basis = PR_BASIS[oefId];
+      if (!basis) return;
+      const overlay = document.getElementById("pr-overlay")!;
+      const prKaart = document.getElementById("pr-kaart")!;
+      document.getElementById("pr-tekst")!.textContent = `${basis.naam} ${String(kg).replace(".", ",")} kg`;
+      overlay.classList.remove("hidden");
+      overlay.classList.add("flex");
+      requestAnimationFrame(() => prKaart.classList.remove("scale-95", "opacity-0"));
+      navigator.vibrate?.([80, 40, 120]);
+      setTimeout(() => {
+        prKaart.classList.add("scale-95", "opacity-0");
+        setTimeout(() => {
+          overlay.classList.add("hidden");
+          overlay.classList.remove("flex");
+        }, 220);
+      }, 2400);
+    }
+
+    function checkPr(oefId: string, kg: number | null): void {
+      if (kg === null || !PR_BASIS[oefId]) return;
+      const eigen = (state.eigenPrs as Record<string, number> | undefined)?.[oefId] ?? 0;
+      const record = Math.max(PR_BASIS[oefId]!.kg, eigen);
+      if (kg > record) {
+        patchState((s) => {
+          (s as Record<string, unknown>).eigenPrs = { ...((s.eigenPrs as object) ?? {}), [oefId]: kg };
+        });
+        (state as Record<string, unknown>).eigenPrs = { ...((state.eigenPrs as object) ?? {}), [oefId]: kg };
+        vierPr(oefId, kg);
+      }
+    }
+
+    // Oefeningkaarten opbouwen: overrides van de trainer, set-logs, vorige-keer-hint
     const kaarten = document.querySelectorAll<HTMLElement>(".oefening-kaart");
 
     function chipKlasse(done: boolean): string {
       return `set-chip grid size-11 place-items-center rounded-xl border font-display text-sm font-bold transition-all ${
         done ? "bg-volt text-coal-950 border-volt" : "bg-coal-950 text-white/60 border-white/12 hover:border-white/30"
       }`;
+    }
+
+    function stepper(waardeTekst: string): HTMLElement {
+      const blok = document.createElement("div");
+      blok.className = "flex shrink-0 items-center gap-0.5 rounded-lg border border-white/10 bg-coal-800 p-0.5";
+      blok.innerHTML = `
+        <button type="button" data-stap="min" class="grid size-7 place-items-center rounded-md text-white/60" aria-label="Minder">-</button>
+        <span class="min-w-11 text-center text-xs font-semibold tabular-nums" data-stap="waarde">${waardeTekst}</span>
+        <button type="button" data-stap="plus" class="grid size-7 place-items-center rounded-md text-white/60" aria-label="Meer">+</button>`;
+      return blok;
     }
 
     kaarten.forEach((kaart) => {
@@ -221,54 +288,180 @@ function progressieVan(id: string): { tekst: string; delta: number } | null {
       const reps = override?.reps ?? kaart.dataset.reps!;
       const basisGewicht = override?.gewicht ?? (kaart.dataset.gewicht ? Number(kaart.dataset.gewicht) : null);
       const rust = Number(kaart.dataset.rust);
+      const sleutel = setSleutel(dag, oef);
 
       kaart.dataset.sets = String(sets);
       const setsRepsEl = kaart.querySelector('[data-veld="setsreps"]');
       if (setsRepsEl) setsRepsEl.textContent = `${sets} x ${reps}`;
 
-      // Gewicht
-      let gewicht = basisGewicht !== null ? (state.gewichten?.[oef] ?? basisGewicht) : null;
-      const gewichtEl = kaart.querySelector<HTMLElement>('[data-veld="gewicht"]');
-      const toonGewicht = () => {
-        if (gewichtEl && gewicht !== null) gewichtEl.textContent = `${gewicht} kg`;
-      };
-      toonGewicht();
-      kaart.querySelector('[data-actie="gewicht-min"]')?.addEventListener("click", () => {
-        if (gewicht === null) return;
-        gewicht = Math.max(0, Math.round((gewicht - 2.5) * 10) / 10);
-        toonGewicht();
-        patchState((s) => {
-          s.gewichten = { ...(s.gewichten ?? {}), [oef]: gewicht as number };
-        });
-      });
-      kaart.querySelector('[data-actie="gewicht-plus"]')?.addEventListener("click", () => {
-        if (gewicht === null) return;
-        gewicht = Math.round((gewicht + 2.5) * 10) / 10;
-        toonGewicht();
-        patchState((s) => {
-          s.gewichten = { ...(s.gewichten ?? {}), [oef]: gewicht as number };
-        });
-      });
+      // Vorige keer: uit eerdere sessies, anders uit het krachtverloop
+      const laatste = (state.laatsteSessies as Record<string, { kg: number | null; reps: number; sets: number }> | undefined)?.[oef];
+      const verloop = KRACHT_VERLOOP[oef];
+      let hint = "";
+      if (laatste) {
+        hint = `Vorige keer: ${laatste.sets} sets${laatste.kg !== null ? ` met ${laatste.kg} kg` : ""}`;
+      } else if (verloop) {
+        hint = `Vorige keer: ${verloop.punten[verloop.punten.length - 1]!.kg} kg`;
+      }
+      if (hint) {
+        const hintEl = document.createElement("p");
+        hintEl.className = "mt-2 text-xs text-white/40";
+        hintEl.textContent = hint;
+        kaart.querySelector('[data-veld="sets"]')!.before(hintEl);
+      }
 
-      // Set-chips
       const setsEl = kaart.querySelector<HTMLElement>('[data-veld="sets"]')!;
-      const done: boolean[] = state.setsDone?.[setSleutel(dag, oef)] ?? Array(sets).fill(false);
-      for (let i = 0; i < sets; i++) {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = chipKlasse(done[i] ?? false);
-        chip.textContent = String(i + 1);
-        chip.setAttribute("aria-label", `Set ${i + 1} afvinken`);
-        chip.addEventListener("click", () => {
-          done[i] = !done[i];
-          chip.className = chipKlasse(done[i]!);
-          patchState((s) => {
-            s.setsDone = { ...(s.setsDone ?? {}), [setSleutel(dag, oef)]: done };
+      const repsNumeriek = /^\d+$/.test(reps);
+      const standaardKg = basisGewicht !== null ? (state.gewichten?.[oef] ?? basisGewicht) : null;
+
+      // Set-logs: per set gewicht, herhalingen en klaar-status
+      const bestaand = (state.setLogs as Record<string, SetLog[]> | undefined)?.[sleutel];
+      const legacyDone = state.setsDone?.[sleutel];
+      const logs: SetLog[] = Array.from({ length: sets }, (_, i) =>
+        bestaand?.[i] ?? { kg: standaardKg, reps: repsNumeriek ? Number(reps) : 0, done: legacyDone?.[i] ?? false },
+      );
+
+      function bewaarLogs(): void {
+        patchState((s) => {
+          (s as Record<string, unknown>).setLogs = { ...((s.setLogs as object) ?? {}), [sleutel]: logs };
+          s.setsDone = { ...(s.setsDone ?? {}), [sleutel]: logs.map((l) => l.done) };
+        });
+      }
+
+      if (repsNumeriek && basisGewicht !== null) {
+        // Volledige logger: chips + actieve-set-regel; de losse gewichtknop bovenin vervalt hier
+        kaart.querySelector('[data-veld="gewichtblok"]')?.classList.add("hidden");
+
+        let volgKg = logs.find((l) => !l.done)?.kg ?? standaardKg ?? 0;
+        let volgReps = logs.find((l) => !l.done)?.reps ?? Number(reps);
+
+        const logger = document.createElement("div");
+        logger.className = "mt-3 flex items-center gap-2 rounded-xl border border-volt/20 bg-coal-950 p-1.5";
+
+        const setLabel = document.createElement("span");
+        setLabel.className = "display shrink-0 px-2 text-sm font-bold text-volt";
+
+        const kgStepper = stepper(`${volgKg} kg`);
+        const repsStepper = stepper(String(volgReps));
+        const klaarKnop = document.createElement("button");
+        klaarKnop.type = "button";
+        klaarKnop.className = "min-w-0 flex-1 rounded-lg bg-volt py-2 text-sm font-bold text-coal-950 transition-transform duration-150 ease-snap active:scale-[0.96]";
+        klaarKnop.textContent = "Klaar";
+
+        logger.append(setLabel, kgStepper, repsStepper, klaarKnop);
+        setsEl.after(logger);
+
+        const kgWaarde = kgStepper.querySelector('[data-stap="waarde"]')!;
+        const repsWaarde = repsStepper.querySelector('[data-stap="waarde"]')!;
+        kgStepper.querySelector('[data-stap="min"]')!.addEventListener("click", () => {
+          volgKg = Math.max(0, Math.round((volgKg - 2.5) * 10) / 10);
+          kgWaarde.textContent = `${volgKg} kg`;
+        });
+        kgStepper.querySelector('[data-stap="plus"]')!.addEventListener("click", () => {
+          volgKg = Math.round((volgKg + 2.5) * 10) / 10;
+          kgWaarde.textContent = `${volgKg} kg`;
+        });
+        repsStepper.querySelector('[data-stap="min"]')!.addEventListener("click", () => {
+          volgReps = Math.max(1, volgReps - 1);
+          repsWaarde.textContent = String(volgReps);
+        });
+        repsStepper.querySelector('[data-stap="plus"]')!.addEventListener("click", () => {
+          volgReps += 1;
+          repsWaarde.textContent = String(volgReps);
+        });
+
+        function toonLogger(): void {
+          const volgende = logs.findIndex((l) => !l.done);
+          if (volgende === -1) {
+            logger.innerHTML = '<p class="w-full py-1.5 text-center text-xs font-semibold text-volt">Alle sets gedaan, sterk</p>';
+            return;
+          }
+          setLabel.textContent = `Set ${volgende + 1}`;
+        }
+
+        function toonChips(): void {
+          setsEl.innerHTML = "";
+          logs.forEach((log, i) => {
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = chipKlasse(log.done);
+            chip.textContent = String(i + 1);
+            chip.title = log.done && log.kg !== null ? `${log.kg} kg x ${log.reps}` : `Set ${i + 1}`;
+            chip.setAttribute("aria-label", `Set ${i + 1}`);
+            chip.addEventListener("click", () => {
+              log.done = !log.done;
+              if (log.done) {
+                log.kg = volgKg;
+                log.reps = volgReps;
+                startRust(rust);
+                checkPr(oef, volgKg);
+              }
+              bewaarLogs();
+              toonChips();
+              toonLogger();
+              werkVoortgangBij();
+            });
+            setsEl.appendChild(chip);
           });
-          if (done[i]) startRust(rust);
+        }
+
+        klaarKnop.addEventListener("click", () => {
+          const volgende = logs.findIndex((l) => !l.done);
+          if (volgende === -1) return;
+          logs[volgende] = { kg: volgKg, reps: volgReps, done: true };
+          bewaarLogs();
+          patchState((s) => {
+            s.gewichten = { ...(s.gewichten ?? {}), [oef]: volgKg };
+          });
+          startRust(rust);
+          checkPr(oef, volgKg);
+          toonChips();
+          toonLogger();
           werkVoortgangBij();
         });
-        setsEl.appendChild(chip);
+
+        toonChips();
+        toonLogger();
+      } else {
+        // Eenvoudige variant: chips afvinken, eventueel met gewichtknop bovenin
+        let gewicht = standaardKg;
+        const gewichtEl = kaart.querySelector<HTMLElement>('[data-veld="gewicht"]');
+        const toonGewicht = () => {
+          if (gewichtEl && gewicht !== null) gewichtEl.textContent = `${gewicht} kg`;
+        };
+        toonGewicht();
+        kaart.querySelector('[data-actie="gewicht-min"]')?.addEventListener("click", () => {
+          if (gewicht === null) return;
+          gewicht = Math.max(0, Math.round((gewicht - 2.5) * 10) / 10);
+          toonGewicht();
+          patchState((s) => {
+            s.gewichten = { ...(s.gewichten ?? {}), [oef]: gewicht as number };
+          });
+        });
+        kaart.querySelector('[data-actie="gewicht-plus"]')?.addEventListener("click", () => {
+          if (gewicht === null) return;
+          gewicht = Math.round((gewicht + 2.5) * 10) / 10;
+          toonGewicht();
+          patchState((s) => {
+            s.gewichten = { ...(s.gewichten ?? {}), [oef]: gewicht as number };
+          });
+        });
+
+        logs.forEach((log, i) => {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = chipKlasse(log.done);
+          chip.textContent = String(i + 1);
+          chip.setAttribute("aria-label", `Set ${i + 1} afvinken`);
+          chip.addEventListener("click", () => {
+            log.done = !log.done;
+            chip.className = chipKlasse(log.done);
+            bewaarLogs();
+            if (log.done) startRust(rust);
+            werkVoortgangBij();
+          });
+          setsEl.appendChild(chip);
+        });
       }
     });
 
@@ -328,17 +521,52 @@ function progressieVan(id: string): { tekst: string; delta: number } | null {
     }
     werkVoortgangBij();
 
-    // Afronden
+    // Afronden: samenvatting maken en laatste sessie per oefening onthouden
     document.querySelectorAll<HTMLButtonElement>('[data-actie="afronden"]').forEach((knop) => {
       knop.addEventListener("click", () => {
-        patchState((s) => {
-          s.trainingenAfgerond = { ...(s.trainingenAfgerond ?? {}), [vandaagKey]: knop.dataset.dag! };
+        const dag = knop.dataset.dag!;
+        const alleLogs = (loadState().setLogs as Record<string, SetLog[]> | undefined) ?? {};
+        let setsGedaan = 0;
+        let volume = 0;
+        const sessies: Record<string, { kg: number | null; reps: number; sets: number; datum: string }> = {};
+        Object.entries(alleLogs).forEach(([sleutel, logs]) => {
+          if (!sleutel.startsWith(`${vandaagKey}:${dag}:`)) return;
+          const oefId = sleutel.split(":").pop()!;
+          const gedaan = logs.filter((l) => l.done);
+          setsGedaan += gedaan.length;
+          gedaan.forEach((l) => {
+            if (l.kg !== null) volume += l.kg * l.reps;
+          });
+          if (gedaan.length) {
+            sessies[oefId] = {
+              kg: gedaan.reduce<number | null>((max, l) => (l.kg !== null && (max === null || l.kg > max) ? l.kg : max), null),
+              reps: gedaan[gedaan.length - 1]!.reps,
+              sets: gedaan.length,
+              datum: vandaagKey,
+            };
+          }
         });
+        patchState((s) => {
+          s.trainingenAfgerond = { ...(s.trainingenAfgerond ?? {}), [vandaagKey]: dag };
+          (s as Record<string, unknown>).laatsteSessies = { ...((s.laatsteSessies as object) ?? {}), ...sessies };
+        });
+        const klaarTekst = document.getElementById("klaar-tekst");
+        if (klaarTekst && setsGedaan > 0) {
+          klaarTekst.textContent =
+            volume > 0
+              ? `${setsGedaan} sets gedaan en ${Math.round(volume).toLocaleString("nl-NL")} kg totaal getild. Daan kan meekijken.`
+              : `${setsGedaan} sets gedaan. Daan kan meekijken.`;
+        }
         stopRust();
         const overlay = document.getElementById("klaar-overlay")!;
         overlay.classList.remove("hidden");
         overlay.classList.add("flex");
       });
     });
+
+    // Lopende rusttimer stoppen zodra je wegnavigeert
+    document.addEventListener("astro:before-swap", stopRust, { once: true });
+    }
+    document.addEventListener("astro:page-load", init);
   </script>
 </AppShell>

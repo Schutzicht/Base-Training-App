@@ -113,6 +113,9 @@ const afspraakDatum = eerstvolgendeAfspraak ? hoofdletter(langNL(new Date(eerstv
     import { loadState, dateKey } from "../../scripts/store";
     import { trainingVanVandaag } from "../../data/demo";
 
+    function init(): void {
+      if (!document.querySelector("#stat-week")) return;
+
     const nu = new Date();
     const uur = nu.getHours();
     const groet = uur < 12 ? "Goedemorgen" : uur < 18 ? "Goedemiddag" : "Goedenavond";
@@ -140,5 +143,7 @@ const afspraakDatum = eerstvolgendeAfspraak ? hoofdletter(langNL(new Date(eerstv
       const stat = document.getElementById("stat-week");
       if (stat) stat.textContent = "2";
     }
+    }
+    document.addEventListener("astro:page-load", init);
   </script>
 </AppShell>

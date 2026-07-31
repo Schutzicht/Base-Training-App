@@ -126,6 +126,9 @@ import { LID } from "../../data/demo";
     import { loadState, patchState, resetState } from "../../scripts/store";
     import { LID } from "../../data/demo";
 
+    function init(): void {
+      if (!document.querySelector("#profiel-avatar")) return;
+
     type Profiel = {
       naam?: string;
       foto?: string;
@@ -289,5 +292,7 @@ import { LID } from "../../data/demo";
       resetState();
       location.href = "/app/";
     });
+    }
+    document.addEventListener("astro:page-load", init);
   </script>
 </AppShell>

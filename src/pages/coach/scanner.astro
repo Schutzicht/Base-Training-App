@@ -1,0 +1,151 @@
+---
+import AppShell from "../../layouts/AppShell.astro";
+---
+
+<AppShell title="Scanner | BASE app" paginaTitel="Scanner" rol="coach">
+  <section class="rise-in text-center">
+    <h2 class="display text-2xl font-extrabold">Toegangsscanner</h2>
+    <p class="mx-auto mt-1 max-w-sm text-sm text-white/50">Richt de camera op de QR-code in de BASE app van een lid om toegang te controleren.</p>
+  </section>
+
+  <!-- Zoeker -->
+  <div class="rise-in rise-in-1 relative mx-auto mt-6 aspect-square w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 bg-coal-900" id="zoeker">
+    <video id="camera" autoplay muted playsinline class="absolute inset-0 h-full w-full object-cover"></video>
+    <div class="pointer-events-none absolute inset-0 grid place-items-center">
+      <div class="relative size-56">
+        <span class="absolute left-0 top-0 h-8 w-8 rounded-tl-2xl border-l-[3px] border-t-[3px] border-volt"></span>
+        <span class="absolute right-0 top-0 h-8 w-8 rounded-tr-2xl border-r-[3px] border-t-[3px] border-volt"></span>
+        <span class="absolute bottom-0 left-0 h-8 w-8 rounded-bl-2xl border-b-[3px] border-l-[3px] border-volt"></span>
+        <span class="absolute bottom-0 right-0 h-8 w-8 rounded-br-2xl border-b-[3px] border-r-[3px] border-volt"></span>
+      </div>
+    </div>
+    <p id="camera-melding" class="absolute inset-x-0 bottom-0 hidden bg-coal-950/80 p-4 text-center text-xs text-white/60 backdrop-blur"></p>
+
+    <!-- Resultaat -->
+    <div id="scan-resultaat" class="absolute inset-0 hidden flex-col items-center justify-center gap-3 bg-coal-950/92 px-6 text-center backdrop-blur-sm">
+      <div id="scan-icoon" class="grid size-20 place-items-center rounded-full bg-volt text-coal-950 volt-glow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="size-10"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </div>
+      <p class="display text-2xl font-extrabold" id="scan-titel">Toegang verleend</p>
+      <p class="text-sm text-white/60" id="scan-detail"></p>
+      <button type="button" id="scan-opnieuw" class="mt-2 rounded-xl bg-white/10 px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-white/15">Scan volgende</button>
+    </div>
+  </div>
+
+  <p class="rise-in rise-in-2 mt-4 text-center text-xs text-white/35">
+    Geen tweede telefoon bij de hand?
+    <button type="button" id="simuleer" class="font-semibold text-volt">Simuleer een scan</button>
+  </p>
+
+  <div class="rise-in rise-in-3 mx-auto mt-8 max-w-sm rounded-2xl border border-white/8 bg-coal-800 p-5">
+    <h3 class="display text-sm font-semibold text-white/85">Vandaag binnen geweest</h3>
+    <div class="mt-3 flex flex-col gap-2 text-sm" id="checkin-lijst">
+      <p class="flex items-center justify-between text-white/60"><span>Bram de Jong</span><span class="text-xs text-white/40">07:02</span></p>
+      <p class="flex items-center justify-between text-white/60"><span>Ruben Kok</span><span class="text-xs text-white/40">08:55</span></p>
+      <p class="flex items-center justify-between text-white/60"><span>Tim Verbeek</span><span class="text-xs text-white/40">12:24</span></p>
+    </div>
+  </div>
+
+  <script>
+    import jsQR from "jsqr";
+    import { loadState } from "../../scripts/store";
+    import { LID } from "../../data/demo";
+
+    function init(): void {
+      if (!document.querySelector("#zoeker")) return;
+
+      const video = document.getElementById("camera") as HTMLVideoElement;
+      const melding = document.getElementById("camera-melding")!;
+      const resultaat = document.getElementById("scan-resultaat")!;
+      const icoon = document.getElementById("scan-icoon")!;
+      const titel = document.getElementById("scan-titel")!;
+      const detail = document.getElementById("scan-detail")!;
+
+      let stream: MediaStream | null = null;
+      let scannen = true;
+      let scanTimer: ReturnType<typeof setInterval> | null = null;
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+
+      function lidNaam(): string {
+        const profiel = loadState().profiel as { naam?: string } | undefined;
+        return profiel?.naam || LID.naam;
+      }
+
+      function toonResultaat(geldig: boolean, naamRegel: string): void {
+        scannen = false;
+        icoon.className = `grid size-20 place-items-center rounded-full ${geldig ? "bg-volt text-coal-950 volt-glow" : "bg-orange-400/20 text-orange-300"}`;
+        icoon.innerHTML = geldig
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="size-10"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" class="size-10"><path d="M7 7l10 10M17 7L7 17"/></svg>';
+        titel.textContent = geldig ? "Toegang verleend" : "Code niet herkend";
+        detail.textContent = naamRegel;
+        resultaat.classList.remove("hidden");
+        resultaat.classList.add("flex");
+        navigator.vibrate?.(geldig ? [60, 40, 60] : 200);
+        if (geldig) {
+          const lijst = document.getElementById("checkin-lijst")!;
+          const rij = document.createElement("p");
+          rij.className = "flex items-center justify-between font-medium text-white";
+          const tijd = new Date().toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+          rij.innerHTML = `<span>${naamRegel.split(" - ")[0]}</span><span class="text-xs text-volt">${tijd}</span>`;
+          lijst.prepend(rij);
+        }
+      }
+
+      function verwerkPayload(data: string): void {
+        const delen = data.split("|");
+        if (delen[0] === "BASE-TOEGANG" && delen[1]) {
+          const naam = delen[1] === LID.lidnummer ? lidNaam() : "Lid";
+          toonResultaat(true, `${naam} - ${delen[1]}`);
+        } else {
+          toonResultaat(false, "Dit is geen BASE-toegangscode.");
+        }
+      }
+
+      function scanFrame(): void {
+        if (!scannen || video.readyState !== video.HAVE_ENOUGH_DATA) return;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        const beeld = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(beeld.data, beeld.width, beeld.height, { inversionAttempts: "dontInvert" });
+        if (code?.data) verwerkPayload(code.data);
+      }
+
+      async function startCamera(): Promise<void> {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+          video.srcObject = stream;
+          scanTimer = setInterval(scanFrame, 250);
+        } catch {
+          melding.textContent = "Geen toegang tot de camera. Gebruik de simulatieknop hieronder om de flow te zien.";
+          melding.classList.remove("hidden");
+        }
+      }
+      startCamera();
+
+      document.getElementById("scan-opnieuw")!.addEventListener("click", () => {
+        resultaat.classList.add("hidden");
+        resultaat.classList.remove("flex");
+        scannen = true;
+      });
+
+      document.getElementById("simuleer")!.addEventListener("click", () => {
+        verwerkPayload(`BASE-TOEGANG|${LID.lidnummer}|DEMO`);
+      });
+
+      // Camera netjes loslaten bij wegnavigeren
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          if (scanTimer) clearInterval(scanTimer);
+          stream?.getTracks().forEach((track) => track.stop());
+        },
+        { once: true },
+      );
+    }
+    document.addEventListener("astro:page-load", init);
+  </script>
+</AppShell>

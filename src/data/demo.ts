@@ -450,3 +450,22 @@ export const EVENTS: CommunityEvent[] = [
     deelnemers: 4,
   },
 ];
+
+// Berichten tussen lid en trainer: startgesprek voor de demo.
+export type ChatBericht = { van: "lid" | "coach"; tekst: string; tijd: string };
+
+export function chatSeed(): ChatBericht[] {
+  const min = (n: number) => new Date(Date.now() - n * 60_000).toISOString();
+  return [
+    { van: "coach", tekst: "Goedemorgen Sanne. Sterke week gehad, je deadlift staat nu op 100 kg. Deze week letten we op je ademhaling bij de zware sets.", tijd: min(2880) },
+    { van: "lid", tekst: "Goedemorgen Daan. Voelde goed vrijdag. Mijn onderrug was wel wat stijf na dag C, is dat normaal?", tijd: min(2820) },
+    { van: "coach", tekst: "Beetje stijfheid mag, pijn niet. Vrijdag kijken we samen naar je setup bij de eerste sets. Neem je meetlint mee, dan doen we ook de maandmeting.", tijd: min(2760) },
+  ];
+}
+
+export const COACH_SNELLE_REPLIES = [
+  "Sterk bezig deze week, ga zo door.",
+  "Ik heb je schema iets aangepast, kijk maar even.",
+  "Plan je even een extra sessie in voor techniek?",
+  "Goed gedaan met je voeding, hou dit vast.",
+];

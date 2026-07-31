@@ -206,6 +206,9 @@ const rustigste = DRUKTE_PATROON.map((waarde, uur) => ({ uur, waarde }))
     import { loadState, patchState } from "../../scripts/store";
     import { DRUKTE_PATROON, NU_IN_STUDIO, drukteNu } from "../../data/demo";
 
+    function init(): void {
+      if (!document.querySelector("#drukte-balken")) return;
+
     const state = loadState();
 
     // Live in de studio: teller en druktegrafiek per uur (07:00-23:00), met het huidige uur in volt.
@@ -368,5 +371,7 @@ const rustigste = DRUKTE_PATROON.map((waarde, uur) => ({ uur, waarde }))
         zetAangevraagd();
       });
     });
+    }
+    document.addEventListener("astro:page-load", init);
   </script>
 </AppShell>
