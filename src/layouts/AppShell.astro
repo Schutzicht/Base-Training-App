@@ -113,9 +113,10 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
     </aside>
 
     <div class="flex min-h-svh flex-col">
-      <!-- Frosted header mobiel -->
-      <header class="lg:hidden sticky top-0 z-40 border-b border-white/8 bg-coal-950/75 backdrop-blur-xl pt-safe">
-        <div class="flex h-14 items-center justify-between px-5">
+      <!-- Frosted header mobiel. Zelfde opzet als de tabbar: blur in een eigen laag tegen iOS-scrollglitches. -->
+      <header class="lg:hidden sticky top-0 z-40 pt-safe [transform:translateZ(0)]">
+        <div aria-hidden="true" class="absolute inset-0 border-b border-white/8 bg-coal-950/75 backdrop-blur-xl"></div>
+        <div class="relative flex h-14 items-center justify-between px-5">
           <a href="/" class="flex items-center">
             <img src="/img/logo-base-wit.png" alt="BASE Training" class="h-4.5 w-auto" />
           </a>
@@ -142,9 +143,11 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
     </div>
   </div>
 
-  <!-- Tabbar mobiel -->
-  <nav class="lg:hidden fixed inset-x-0 bottom-0 z-40 bg-coal-950/65 backdrop-blur-2xl backdrop-saturate-150 pb-safe [box-shadow:0_-0.5px_0_rgba(255,255,255,0.14),0_-12px_32px_rgba(0,0,0,0.45)]">
-    <div class="mx-auto flex max-w-md items-stretch justify-around px-2">
+  <!-- Tabbar mobiel. De blur zit bewust in een eigen laag (niet op het fixed element zelf):
+       iOS Safari laat een fixed element met backdrop-filter anders soms "zweven" tijdens scrollen. -->
+  <nav class="lg:hidden fixed inset-x-0 bottom-0 z-40 pb-safe [transform:translateZ(0)]">
+    <div aria-hidden="true" class="absolute inset-0 bg-coal-950/65 backdrop-blur-2xl backdrop-saturate-150 [box-shadow:0_-0.5px_0_rgba(255,255,255,0.14),0_-12px_32px_rgba(0,0,0,0.45)]"></div>
+    <div class="relative mx-auto flex max-w-md items-stretch justify-around px-2">
       {
         nav.filter((item) => !item.alleenDesktop).map((item) =>
           item.center ? (
