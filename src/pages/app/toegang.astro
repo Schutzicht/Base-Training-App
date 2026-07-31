@@ -21,7 +21,7 @@ import { LID } from "../../data/demo";
       </div>
       <div class="mt-5 flex items-center justify-between">
         <div>
-          <p class="display text-base font-bold">{LID.naam}</p>
+          <p class="display text-base font-bold" data-profiel-naam>{LID.naam}</p>
           <p class="text-xs text-white/50">{LID.membership} - {LID.lidnummer}</p>
         </div>
         <img src="/img/logo-base-wit.png" alt="BASE" class="h-4 w-auto opacity-70" />
@@ -54,15 +54,19 @@ import { LID } from "../../data/demo";
     const balk = document.getElementById("qr-balk")!;
     const VENSTER = 30;
 
-    function tekenQr(): void {
+    async function tekenQr(): Promise<void> {
       const slot = Math.floor(Date.now() / (VENSTER * 1000));
       const payload = `BASE-TOEGANG|${LID.lidnummer}|${slot.toString(36).toUpperCase()}`;
-      QRCode.toCanvas(canvas, payload, {
+      await QRCode.toCanvas(canvas, payload, {
         width: 480,
         margin: 1,
         color: { dark: "#0a0a0a", light: "#ffffff" },
         errorCorrectionLevel: "M",
       });
+      // De bibliotheek zet eigen inline-afmetingen op het canvas; die weghalen zodat
+      // onze CSS (vierkant, volle breedte) de maat bepaalt.
+      canvas.style.width = "";
+      canvas.style.height = "";
     }
 
     tekenQr();
