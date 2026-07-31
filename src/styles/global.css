@@ -13,6 +13,10 @@
 
   --font-display: "Kanit", "Helvetica Neue", Arial, sans-serif;
   --font-sans: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+
+  /* Sterke curves voor UI-feedback (ease-out met punch, iOS-drawer curve) */
+  --ease-snap: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 html {

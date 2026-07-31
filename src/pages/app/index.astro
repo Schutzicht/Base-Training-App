@@ -11,7 +11,7 @@ const afspraakDatum = eerstvolgendeAfspraak ? hoofdletter(langNL(new Date(eerstv
 <AppShell title="Vandaag | BASE app" paginaTitel="Vandaag" rol="lid">
   <section class="rise-in">
     <p class="text-sm text-white/50" id="datum-regel"></p>
-    <h2 class="display mt-1 text-3xl font-extrabold leading-tight"><span id="groet">Hallo</span>, {LID.voornaam}</h2>
+    <h2 class="display mt-1 text-3xl font-extrabold leading-tight"><span id="groet">Hallo</span>, <span id="groet-naam">{LID.voornaam}</span></h2>
   </section>
 
   {
@@ -119,6 +119,12 @@ const afspraakDatum = eerstvolgendeAfspraak ? hoofdletter(langNL(new Date(eerstv
     document.getElementById("groet")!.textContent = groet;
     const datum = nu.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
     document.getElementById("datum-regel")!.textContent = datum.charAt(0).toUpperCase() + datum.slice(1);
+
+    // Eigen naam uit het profiel in de begroeting.
+    const profielNaam = (loadState().profiel as { naam?: string } | undefined)?.naam;
+    if (profielNaam) {
+      document.getElementById("groet-naam")!.textContent = profielNaam.trim().split(/\s+/)[0]!;
+    }
 
     // Afgeronde training vandaag terug laten komen in de kaart en weekteller.
     const state = loadState();

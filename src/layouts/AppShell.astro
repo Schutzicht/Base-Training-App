@@ -88,13 +88,25 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
       </nav>
 
       <div class="mt-auto">
-        <div class="flex items-center gap-3 rounded-2xl bg-coal-800 border border-white/8 px-3.5 py-3">
-          <span class="grid size-9 shrink-0 place-items-center rounded-full bg-volt text-coal-950 font-display font-bold text-xs">{initialen}</span>
-          <div class="min-w-0">
-            <p class="truncate text-sm font-semibold">{rolLabel}</p>
-            <p class="text-xs text-white/45">{rolSub}</p>
-          </div>
-        </div>
+        {
+          rol === "lid" ? (
+            <a href="/app/profiel/" class="flex items-center gap-3 rounded-2xl bg-coal-800 border border-white/8 px-3.5 py-3 transition-colors hover:border-volt/30">
+              <span class="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-volt text-coal-950 font-display font-bold text-xs" data-avatar>{initialen}</span>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold" data-profiel-naam>{rolLabel}</p>
+                <p class="text-xs text-white/45">{rolSub}</p>
+              </div>
+            </a>
+          ) : (
+            <div class="flex items-center gap-3 rounded-2xl bg-coal-800 border border-white/8 px-3.5 py-3">
+              <span class="grid size-9 shrink-0 place-items-center rounded-full bg-volt text-coal-950 font-display font-bold text-xs">{initialen}</span>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold">{rolLabel}</p>
+                <p class="text-xs text-white/45">{rolSub}</p>
+              </div>
+            </div>
+          )
+        }
         <a href="/" class="mt-2 block px-3.5 py-1.5 text-xs text-white/40 hover:text-white/70 transition-colors">Wissel van rol</a>
         <p class="px-3.5 mt-4 text-[11px] text-white/30">Made By <span class="agensea-glow font-semibold">Agensea</span></p>
       </div>
@@ -108,7 +120,12 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
             <img src="/img/logo-base-wit.png" alt="BASE Training" class="h-4.5 w-auto" />
           </a>
           <span class="display text-sm font-semibold text-white/85">{paginaTitel}</span>
-          <a href="/" aria-label="Wissel van rol" class="grid size-8 place-items-center rounded-full bg-volt text-coal-950 font-display font-bold text-[11px]">{initialen}</a>
+          <a
+            href={rol === "lid" ? "/app/profiel/" : "/"}
+            aria-label={rol === "lid" ? "Jouw profiel" : "Wissel van rol"}
+            class="grid size-8 place-items-center overflow-hidden rounded-full bg-volt text-coal-950 font-display font-bold text-[11px] transition-transform duration-150 ease-snap active:scale-90"
+            data-avatar={rol === "lid" ? "" : undefined}
+          >{initialen}</a>
         </div>
       </header>
 
@@ -126,15 +143,15 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
   </div>
 
   <!-- Tabbar mobiel -->
-  <nav class="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-white/8 bg-coal-950/80 backdrop-blur-xl pb-safe">
+  <nav class="lg:hidden fixed inset-x-0 bottom-0 z-40 bg-coal-950/65 backdrop-blur-2xl backdrop-saturate-150 pb-safe [box-shadow:0_-0.5px_0_rgba(255,255,255,0.14),0_-12px_32px_rgba(0,0,0,0.45)]">
     <div class="mx-auto flex max-w-md items-stretch justify-around px-2">
       {
         nav.filter((item) => !item.alleenDesktop).map((item) =>
           item.center ? (
-            <a href={item.href} aria-label={item.label} class="relative -top-4 grid place-items-center">
+            <a href={item.href} aria-label={item.label} class="group relative -top-4 grid place-items-center">
               <span
                 class:list={[
-                  "grid size-14 place-items-center rounded-full border-4 border-coal-950 transition-colors",
+                  "grid size-14 place-items-center rounded-full border-4 border-coal-950 transition-transform duration-150 ease-snap group-active:scale-90 [box-shadow:0_6px_20px_rgba(214,251,0,0.25)]",
                   isActief(item.href) ? "bg-white text-coal-950" : "bg-volt text-coal-950",
                 ]}
               >
@@ -145,11 +162,20 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
             <a
               href={item.href}
               class:list={[
-                "flex flex-1 flex-col items-center gap-1 pt-2.5 pb-2 text-[10px] font-medium transition-colors",
+                "group flex flex-1 flex-col items-center gap-1 pt-2.5 pb-2 text-[10px] font-medium transition-colors duration-200",
                 isActief(item.href) ? "text-volt" : "text-white/50",
               ]}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5.5" set:html={iconen[item.icoon]} />
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="size-5.5 transition-transform duration-150 ease-snap group-active:scale-85"
+                set:html={iconen[item.icoon]}
+              />
               {item.label}
             </a>
           ),
@@ -157,4 +183,28 @@ const rolSub = rol === "lid" ? "Limited Member" : "Trainer";
       }
     </div>
   </nav>
+
+  {
+    rol === "lid" && (
+      <script>
+        // Personalisatie: eigen naam en foto uit het profiel tonen in de shell.
+        try {
+          const profiel = (JSON.parse(localStorage.getItem("base-app-demo-v1") ?? "{}").profiel ?? {}) as { naam?: string; foto?: string };
+          if (profiel.naam) {
+            const delen = profiel.naam.trim().split(/\s+/);
+            const initialen = (delen[0]?.[0] ?? "") + (delen[1]?.[0] ?? "");
+            document.querySelectorAll("[data-avatar]").forEach((el) => {
+              if (!profiel.foto) el.textContent = initialen.toUpperCase();
+            });
+            document.querySelectorAll("[data-profiel-naam]").forEach((el) => (el.textContent = profiel.naam!));
+          }
+          if (profiel.foto) {
+            document.querySelectorAll("[data-avatar]").forEach((el) => {
+              el.innerHTML = `<img src="${profiel.foto}" alt="" class="size-full object-cover" />`;
+            });
+          }
+        } catch {}
+      </script>
+    )
+  }
 </BaseLayout>

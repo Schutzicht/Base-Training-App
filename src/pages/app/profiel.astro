@@ -1,0 +1,293 @@
+---
+import AppShell from "../../layouts/AppShell.astro";
+import { LID } from "../../data/demo";
+---
+
+<AppShell title="Profiel | BASE app" paginaTitel="Profiel" rol="lid">
+  <!-- Hero -->
+  <section class="rise-in flex flex-col items-center pt-2 text-center">
+    <button type="button" id="foto-knop" class="group relative transition-transform duration-150 ease-snap active:scale-[0.97]" aria-label="Profielfoto wijzigen">
+      <span id="profiel-avatar" class="grid size-24 place-items-center overflow-hidden rounded-full bg-volt font-display text-2xl font-bold text-coal-950">SV</span>
+      <span class="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full border-4 border-coal-950 bg-coal-700 text-white/80 transition-colors group-hover:bg-coal-600">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="size-4"><path d="M4 8.5h2.5L8.5 6h7l2 2.5H20a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18v-8A1.5 1.5 0 0 1 4 8.5z"/><circle cx="12" cy="13.5" r="3.2"/></svg>
+      </span>
+    </button>
+    <input type="file" id="foto-input" accept="image/*" class="hidden" />
+    <h2 class="display mt-4 text-2xl font-extrabold" id="hero-naam">{LID.naam}</h2>
+    <p class="mt-1 text-sm text-white/50">{LID.membership} - {LID.lidnummer}</p>
+    <button type="button" id="foto-verwijder" class="mt-2 hidden text-xs text-white/40 transition-colors hover:text-white/70">Verwijder foto</button>
+  </section>
+
+  <!-- Gegevens -->
+  <section class="rise-in rise-in-1 mt-7">
+    <div class="flex items-baseline justify-between px-1">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-white/40">Gegevens</h3>
+      <span id="opgeslagen" class="text-xs text-volt opacity-0 transition-opacity duration-200">Opgeslagen</span>
+    </div>
+    <div class="mt-2 divide-y divide-white/6 rounded-2xl border border-white/8 bg-coal-800">
+      {
+        [
+          { id: "naam", label: "Naam", type: "text" as const, placeholder: LID.naam },
+          { id: "doel", label: "Doel", type: "text" as const, placeholder: LID.doel },
+          { id: "telefoon", label: "Telefoon", type: "tel" as const, placeholder: "06 12 34 56 78" },
+          { id: "geboortedatum", label: "Geboortedatum", type: "date" as const, placeholder: "" },
+        ].map((veld) => (
+          <label class="flex items-center justify-between gap-4 px-4.5 py-3.5">
+            <span class="shrink-0 text-sm text-white/55">{veld.label}</span>
+            <input
+              type={veld.type}
+              data-profiel-veld={veld.id}
+              placeholder={veld.placeholder}
+              class="min-w-0 flex-1 bg-transparent text-right text-sm font-medium text-white placeholder:text-white/30 focus:outline-none [color-scheme:dark]"
+            />
+          </label>
+        ))
+      }
+    </div>
+    <p class="mt-2 px-1 text-[11px] text-white/35">Je naam en foto zie je overal in de app terug. Daan ziet deze gegevens ook.</p>
+  </section>
+
+  <!-- Trainingsvoorkeur -->
+  <section class="rise-in rise-in-2 mt-6">
+    <h3 class="px-1 text-xs font-semibold uppercase tracking-wider text-white/40">Wanneer train je het liefst?</h3>
+    <div class="mt-2 grid grid-cols-3 gap-2" id="momenten">
+      {
+        ["Ochtend", "Middag", "Avond"].map((moment) => (
+          <button
+            type="button"
+            data-moment={moment}
+            class="rounded-2xl border border-white/10 bg-coal-800 py-3.5 text-sm font-semibold text-white/60 transition-[transform,background-color,border-color,color] duration-150 ease-snap active:scale-[0.96]"
+          >
+            {moment}
+          </button>
+        ))
+      }
+    </div>
+    <p class="mt-2 px-1 text-[11px] text-white/35">Hiermee matchen we je trainbuddies en stelt Daan je schema-momenten voor.</p>
+  </section>
+
+  <!-- Meldingen -->
+  <section class="rise-in rise-in-3 mt-6">
+    <h3 class="px-1 text-xs font-semibold uppercase tracking-wider text-white/40">Meldingen</h3>
+    <div class="mt-2 divide-y divide-white/6 rounded-2xl border border-white/8 bg-coal-800">
+      {
+        [
+          { id: "training", label: "Trainingsherinnering", sub: "Op je trainingsdagen om 08:00" },
+          { id: "buddy", label: "Buddy-activiteit", sub: "Verzoeken en berichten van buddies" },
+          { id: "community", label: "Challenges en events", sub: "Nieuwe challenges en mijlpalen" },
+        ].map((m) => (
+          <div class="flex items-center justify-between gap-4 px-4.5 py-3.5">
+            <div class="min-w-0">
+              <p class="text-sm font-medium">{m.label}</p>
+              <p class="mt-0.5 text-xs text-white/40">{m.sub}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked="true"
+              aria-label={m.label}
+              data-melding={m.id}
+              class="melding-switch relative h-7 w-12 shrink-0 rounded-full bg-volt transition-colors duration-200"
+            >
+              <span class="knopje absolute left-0.5 top-0.5 size-6 rounded-full bg-white shadow-md transition-transform duration-200 ease-drawer" style="transform: translateX(20px)" />
+            </button>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Membership -->
+  <section class="rise-in rise-in-4 mt-6 rounded-2xl border border-volt/20 bg-coal-800 p-5">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <p class="display text-base font-bold">{LID.membership}</p>
+        <p class="mt-0.5 text-xs text-white/50">{LID.lidnummer} - lid sinds de opening</p>
+      </div>
+      <a href="/app/toegang/" class="shrink-0 rounded-xl bg-volt px-4 py-2.5 text-sm font-bold text-coal-950 transition-transform duration-150 ease-snap active:scale-[0.96]">Toegangscode</a>
+    </div>
+  </section>
+
+  <!-- Acties -->
+  <section class="rise-in rise-in-4 mt-6 divide-y divide-white/6 rounded-2xl border border-white/8 bg-coal-800">
+    <a href="/" class="flex items-center justify-between px-4.5 py-3.5 text-sm font-medium transition-colors hover:bg-white/4">
+      Wissel van rol
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 text-white/40"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+    <button type="button" id="reset-demo" class="flex w-full items-center justify-between px-4.5 py-3.5 text-left text-sm font-medium text-orange-300 transition-colors hover:bg-white/4">
+      <span id="reset-tekst">Demo-data resetten</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="size-4 opacity-60"><path d="M4 9a8 8 0 0 1 14-2.5M20 15a8 8 0 0 1-14 2.5"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>
+    </button>
+  </section>
+
+  <p class="mt-8 text-center text-[11px] text-white/25">Made By <span class="agensea-glow font-semibold">Agensea</span></p>
+
+  <script>
+    import { loadState, patchState, resetState } from "../../scripts/store";
+    import { LID } from "../../data/demo";
+
+    type Profiel = {
+      naam?: string;
+      foto?: string;
+      doel?: string;
+      telefoon?: string;
+      geboortedatum?: string;
+      momenten?: string[];
+      meldingen?: Record<string, boolean>;
+    };
+
+    const state = loadState();
+    const profiel: Profiel = (state.profiel as Profiel | undefined) ?? {};
+
+    const opgeslagen = document.getElementById("opgeslagen")!;
+    let opslaanTimer: ReturnType<typeof setTimeout> | null = null;
+    function bewaar(patch: Partial<Profiel>, toon = true): void {
+      Object.assign(profiel, patch);
+      patchState((s) => {
+        (s as Record<string, unknown>).profiel = { ...profiel };
+      });
+      if (!toon) return;
+      opgeslagen.classList.remove("opacity-0");
+      if (opslaanTimer) clearTimeout(opslaanTimer);
+      opslaanTimer = setTimeout(() => opgeslagen.classList.add("opacity-0"), 1600);
+    }
+
+    // Avatar en naam in de hero
+    const avatar = document.getElementById("profiel-avatar")!;
+    const heroNaam = document.getElementById("hero-naam")!;
+    const verwijderKnop = document.getElementById("foto-verwijder")!;
+
+    function initialenVan(naam: string): string {
+      const delen = naam.trim().split(/\s+/);
+      return ((delen[0]?.[0] ?? "") + (delen[1]?.[0] ?? "")).toUpperCase();
+    }
+
+    function toonAvatar(): void {
+      const naam = profiel.naam || LID.naam;
+      heroNaam.textContent = naam;
+      if (profiel.foto) {
+        avatar.innerHTML = `<img src="${profiel.foto}" alt="" class="size-full object-cover" />`;
+        verwijderKnop.classList.remove("hidden");
+      } else {
+        avatar.textContent = initialenVan(naam);
+        verwijderKnop.classList.add("hidden");
+      }
+      // Shell-avatars (header en sidebar) live bijwerken
+      document.querySelectorAll("[data-avatar]").forEach((el) => {
+        if (profiel.foto) el.innerHTML = `<img src="${profiel.foto}" alt="" class="size-full object-cover" />`;
+        else el.textContent = initialenVan(naam);
+      });
+      document.querySelectorAll("[data-profiel-naam]").forEach((el) => (el.textContent = naam));
+    }
+    toonAvatar();
+
+    // Foto kiezen: verkleinen naar 320px vierkant zodat localStorage klein blijft
+    const fotoInput = document.getElementById("foto-input") as HTMLInputElement;
+    document.getElementById("foto-knop")!.addEventListener("click", () => fotoInput.click());
+    fotoInput.addEventListener("change", () => {
+      const bestand = fotoInput.files?.[0];
+      if (!bestand) return;
+      const lezer = new FileReader();
+      lezer.onload = () => {
+        const beeld = new Image();
+        beeld.onload = () => {
+          const MAAT = 320;
+          const canvas = document.createElement("canvas");
+          canvas.width = MAAT;
+          canvas.height = MAAT;
+          const ctx = canvas.getContext("2d")!;
+          const zijde = Math.min(beeld.width, beeld.height);
+          const sx = (beeld.width - zijde) / 2;
+          const sy = (beeld.height - zijde) / 2;
+          ctx.drawImage(beeld, sx, sy, zijde, zijde, 0, 0, MAAT, MAAT);
+          bewaar({ foto: canvas.toDataURL("image/jpeg", 0.85) });
+          toonAvatar();
+        };
+        beeld.src = lezer.result as string;
+      };
+      lezer.readAsDataURL(bestand);
+      fotoInput.value = "";
+    });
+    verwijderKnop.addEventListener("click", () => {
+      delete profiel.foto;
+      patchState((s) => {
+        (s as Record<string, unknown>).profiel = { ...profiel };
+      });
+      toonAvatar();
+    });
+
+    // Invoervelden met autosave
+    document.querySelectorAll<HTMLInputElement>("[data-profiel-veld]").forEach((veld) => {
+      const id = veld.dataset.profielVeld as keyof Profiel;
+      const waarde = profiel[id];
+      if (typeof waarde === "string") veld.value = waarde;
+      let debounce: ReturnType<typeof setTimeout> | null = null;
+      veld.addEventListener("input", () => {
+        if (debounce) clearTimeout(debounce);
+        debounce = setTimeout(() => {
+          bewaar({ [id]: veld.value } as Partial<Profiel>);
+          if (id === "naam") toonAvatar();
+        }, 450);
+      });
+    });
+
+    // Trainingsmomenten
+    const momenten = new Set(profiel.momenten ?? ["Avond"]);
+    document.querySelectorAll<HTMLButtonElement>("[data-moment]").forEach((knop) => {
+      const moment = knop.dataset.moment!;
+      const toon = () => {
+        const aan = momenten.has(moment);
+        knop.classList.toggle("bg-volt", aan);
+        knop.classList.toggle("text-coal-950", aan);
+        knop.classList.toggle("border-volt", aan);
+        knop.classList.toggle("bg-coal-800", !aan);
+        knop.classList.toggle("text-white/60", !aan);
+        knop.classList.toggle("border-white/10", !aan);
+      };
+      toon();
+      knop.addEventListener("click", () => {
+        momenten.has(moment) ? momenten.delete(moment) : momenten.add(moment);
+        toon();
+        bewaar({ momenten: [...momenten] });
+      });
+    });
+
+    // Meldingen-switches
+    const meldingen: Record<string, boolean> = { training: true, buddy: true, community: true, ...(profiel.meldingen ?? {}) };
+    document.querySelectorAll<HTMLButtonElement>("[data-melding]").forEach((schakel) => {
+      const id = schakel.dataset.melding!;
+      const knopje = schakel.querySelector<HTMLElement>(".knopje")!;
+      const toon = () => {
+        const aan = meldingen[id]!;
+        schakel.setAttribute("aria-checked", String(aan));
+        schakel.classList.toggle("bg-volt", aan);
+        schakel.classList.toggle("bg-white/15", !aan);
+        knopje.style.transform = aan ? "translateX(20px)" : "translateX(0)";
+      };
+      toon();
+      schakel.addEventListener("click", () => {
+        meldingen[id] = !meldingen[id];
+        toon();
+        bewaar({ meldingen: { ...meldingen } });
+      });
+    });
+
+    // Demo resetten met dubbele bevestiging
+    const resetKnop = document.getElementById("reset-demo")!;
+    const resetTekst = document.getElementById("reset-tekst")!;
+    let armed = false;
+    resetKnop.addEventListener("click", () => {
+      if (!armed) {
+        armed = true;
+        resetTekst.textContent = "Zeker weten? Tik nogmaals";
+        setTimeout(() => {
+          armed = false;
+          resetTekst.textContent = "Demo-data resetten";
+        }, 3000);
+        return;
+      }
+      resetState();
+      location.href = "/app/";
+    });
+  </script>
+</AppShell>
