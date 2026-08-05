@@ -344,11 +344,11 @@ function progressieVan(id: string): { tekst: string; delta: number } | null {
 
     function stepper(waardeTekst: string): HTMLElement {
       const blok = document.createElement("div");
-      blok.className = "flex shrink-0 items-center gap-0.5 rounded-lg border border-white/10 bg-coal-800 p-0.5";
+      blok.className = "flex min-w-0 flex-1 items-center justify-between rounded-lg border border-white/10 bg-coal-800 p-0.5";
       blok.innerHTML = `
-        <button type="button" data-stap="min" class="grid size-7 place-items-center rounded-md text-white/60" aria-label="Minder">-</button>
-        <span class="min-w-11 text-center text-xs font-semibold tabular-nums" data-stap="waarde">${waardeTekst}</span>
-        <button type="button" data-stap="plus" class="grid size-7 place-items-center rounded-md text-white/60" aria-label="Meer">+</button>`;
+        <button type="button" data-stap="min" class="grid size-8 shrink-0 place-items-center rounded-md text-white/60" aria-label="Minder">-</button>
+        <span class="min-w-0 truncate px-1 text-center text-[13px] font-semibold tabular-nums" data-stap="waarde">${waardeTekst}</span>
+        <button type="button" data-stap="plus" class="grid size-8 shrink-0 place-items-center rounded-md text-white/60" aria-label="Meer">+</button>`;
       return blok;
     }
 
@@ -408,19 +408,19 @@ function progressieVan(id: string): { tekst: string; delta: number } | null {
         let volgReps = logs.find((l) => !l.done)?.reps ?? Number(reps);
 
         const logger = document.createElement("div");
-        logger.className = "mt-3 flex items-center gap-2 rounded-xl border border-volt/20 bg-coal-950 p-1.5";
+        logger.className = "mt-3 rounded-xl border border-volt/20 bg-coal-950 p-2";
 
-        const setLabel = document.createElement("span");
-        setLabel.className = "display shrink-0 px-2 text-sm font-bold text-volt";
-
+        const stepperRij = document.createElement("div");
+        stepperRij.className = "flex gap-2";
         const kgStepper = stepper(`${volgKg} kg`);
-        const repsStepper = stepper(String(volgReps));
+        const repsStepper = stepper(`${volgReps} herh.`);
+        stepperRij.append(kgStepper, repsStepper);
+
         const klaarKnop = document.createElement("button");
         klaarKnop.type = "button";
-        klaarKnop.className = "min-w-0 flex-1 rounded-lg bg-volt py-2 text-sm font-bold text-coal-950 transition-transform duration-150 ease-snap active:scale-[0.96]";
-        klaarKnop.textContent = "Klaar";
+        klaarKnop.className = "mt-2 w-full rounded-lg bg-volt py-2.5 font-display text-sm font-bold uppercase tracking-wide text-coal-950 transition-transform duration-150 ease-snap active:scale-[0.98]";
 
-        logger.append(setLabel, kgStepper, repsStepper, klaarKnop);
+        logger.append(stepperRij, klaarKnop);
         setsEl.after(logger);
 
         const kgWaarde = kgStepper.querySelector('[data-stap="waarde"]')!;
@@ -435,20 +435,20 @@ function progressieVan(id: string): { tekst: string; delta: number } | null {
         });
         repsStepper.querySelector('[data-stap="min"]')!.addEventListener("click", () => {
           volgReps = Math.max(1, volgReps - 1);
-          repsWaarde.textContent = String(volgReps);
+          repsWaarde.textContent = `${volgReps} herh.`;
         });
         repsStepper.querySelector('[data-stap="plus"]')!.addEventListener("click", () => {
           volgReps += 1;
-          repsWaarde.textContent = String(volgReps);
+          repsWaarde.textContent = `${volgReps} herh.`;
         });
 
         function toonLogger(): void {
           const volgende = logs.findIndex((l) => !l.done);
           if (volgende === -1) {
-            logger.innerHTML = '<p class="w-full py-1.5 text-center text-xs font-semibold text-volt">Alle sets gedaan, sterk</p>';
+            logger.innerHTML = '<p class="w-full py-2 text-center text-xs font-semibold text-volt">Alle sets gedaan, sterk</p>';
             return;
           }
-          setLabel.textContent = `Set ${volgende + 1}`;
+          klaarKnop.textContent = `Set ${volgende + 1} klaar`;
         }
 
         function toonChips(): void {
