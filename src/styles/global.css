@@ -54,6 +54,20 @@ body {
     0 24px 60px rgba(0, 0, 0, 0.5);
 }
 
+/* Spierkaart: regio's van het figuur */
+.spier-lijf {
+  fill: rgba(255, 255, 255, 0.05);
+}
+.spier-basis {
+  fill: rgba(255, 255, 255, 0.1);
+}
+.spier-primair {
+  fill: var(--color-volt);
+}
+.spier-secundair {
+  fill: rgba(214, 251, 0, 0.32);
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

@@ -1,6 +1,13 @@
 ---
 import AppShell from "../../layouts/AppShell.astro";
-import { SCHEMA, KRACHT_VERLOOP, trainingVanVandaag, volgendeTraining } from "../../data/demo";
+import SpierKaart from "../../components/SpierKaart.astro";
+import { SCHEMA, KRACHT_VERLOOP, OEFENING_SPIEREN, SPIEREN, trainingVanVandaag, volgendeTraining } from "../../data/demo";
+
+const alleOefeningen = SCHEMA.dagen.flatMap((d) => d.oefeningen);
+
+function spierNamen(slugs: string[]): string {
+  return slugs.map((slug) => SPIEREN[slug]?.naam ?? slug).join(", ");
+}
 
 const vandaag = trainingVanVandaag();
 const actieveDag = vandaag?.id ?? volgendeTraining().dag.id;
@@ -89,6 +96,14 @@ function progressieVan(id: string): { tekst: string; delta: number } | null {
               </div>
             </div>
             {oef.cue && <p class="mt-2 text-xs text-white/40">Tip: {oef.cue}</p>}
+            <button
+              type="button"
+              data-techniek-open={oef.id}
+              class="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-coal-950 px-3 py-1.5 text-xs font-semibold text-white/70 transition-colors hover:border-volt/40 hover:text-white"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" class="size-3.5 text-volt"><path d="M8 5.5v13l11-6.5z" /></svg>
+              Techniek en spieren
+            </button>
             <div class="mt-4 flex flex-wrap gap-2" data-veld="sets" />
             {(() => {
               const prog = progressieVan(oef.id);
@@ -155,6 +170,63 @@ function progressieVan(id: string): { tekst: string; delta: number } | null {
       <p class="display mt-1 text-2xl font-extrabold" id="pr-tekst"></p>
     </div>
   </div>
+
+  <!-- Techniek-sheets: video plus spierkaart per oefening -->
+  {
+    alleOefeningen.map((oef) => {
+      const spieren = OEFENING_SPIEREN[oef.id] ?? { primair: [], secundair: [] };
+      return (
+        <div class="techniek-sheet fixed inset-0 z-[75] hidden items-end justify-center lg:items-center" data-techniek-sheet={oef.id}>
+          <div class="absolute inset-0 bg-coal-950/80 backdrop-blur-sm" data-techniek-dicht />
+          <div class="sheet-paneel relative max-h-[92svh] w-full max-w-md translate-y-8 overflow-y-auto rounded-t-3xl border border-white/10 bg-coal-900 p-5 pb-10 opacity-0 transition-[transform,opacity] duration-300 ease-drawer lg:rounded-3xl lg:pb-5">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="display text-xl font-extrabold">{oef.naam}</h3>
+                <p class="mt-0.5 text-xs text-white/50">{oef.spiergroep} - {oef.sets} x {oef.reps}</p>
+              </div>
+              <button type="button" data-techniek-dicht aria-label="Sluiten" class="grid size-9 shrink-0 place-items-center rounded-full bg-white/8 text-white/70 transition-transform duration-150 ease-snap active:scale-90">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" class="size-4"><path d="M7 7l10 10M17 7L7 17" /></svg>
+              </button>
+            </div>
+
+            <div class="mt-4 overflow-hidden rounded-2xl border border-white/8 bg-coal-950">
+              <video
+                src={`/video/oefeningen/${oef.id}.mp4`}
+                class="aspect-square w-full object-cover"
+                muted
+                loop
+                playsinline
+                preload="none"
+                data-techniek-video
+              />
+            </div>
+
+            <div class="mt-5 rounded-2xl border border-white/8 bg-coal-800 p-4">
+              <SpierKaart primair={spieren.primair} secundair={spieren.secundair} />
+              <div class="mt-4 flex flex-col gap-1.5 text-xs">
+                <p class="flex items-start gap-2">
+                  <span class="mt-1 size-2.5 shrink-0 rounded-full bg-volt" />
+                  <span class="text-white/70"><span class="font-semibold text-white">Primair:</span> {spierNamen(spieren.primair)}</span>
+                </p>
+                {spieren.secundair.length > 0 && (
+                  <p class="flex items-start gap-2">
+                    <span class="mt-1 size-2.5 shrink-0 rounded-full bg-volt/35" />
+                    <span class="text-white/70"><span class="font-semibold text-white">Secundair:</span> {spierNamen(spieren.secundair)}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {oef.cue && (
+              <p class="mt-4 rounded-2xl border border-volt/20 bg-volt/8 px-4 py-3 text-sm leading-relaxed text-white/80">
+                <span class="font-semibold text-volt">Let op je houding:</span> {oef.cue}
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    })
+  }
 
   <script>
     import { loadState, patchState, dateKey } from "../../scripts/store";
@@ -564,8 +636,48 @@ function progressieVan(id: string): { tekst: string; delta: number } | null {
       });
     });
 
-    // Lopende rusttimer stoppen zodra je wegnavigeert
-    document.addEventListener("astro:before-swap", stopRust, { once: true });
+    // Techniek-sheets: video en spierkaart per oefening
+    let openSheet: HTMLElement | null = null;
+
+    function sluitTechniek(): void {
+      if (!openSheet) return;
+      const paneel = openSheet.querySelector<HTMLElement>(".sheet-paneel")!;
+      const video = openSheet.querySelector<HTMLVideoElement>("[data-techniek-video]");
+      video?.pause();
+      paneel.classList.add("translate-y-8", "opacity-0");
+      const sheet = openSheet;
+      openSheet = null;
+      setTimeout(() => {
+        sheet.classList.add("hidden");
+        sheet.classList.remove("flex");
+      }, 300);
+    }
+
+    document.querySelectorAll<HTMLButtonElement>("[data-techniek-open]").forEach((knop) => {
+      knop.addEventListener("click", () => {
+        const sheet = document.querySelector<HTMLElement>(`[data-techniek-sheet="${knop.dataset.techniekOpen}"]`);
+        if (!sheet) return;
+        openSheet = sheet;
+        sheet.classList.remove("hidden");
+        sheet.classList.add("flex");
+        const paneel = sheet.querySelector<HTMLElement>(".sheet-paneel")!;
+        requestAnimationFrame(() => requestAnimationFrame(() => paneel.classList.remove("translate-y-8", "opacity-0")));
+        sheet.querySelector<HTMLVideoElement>("[data-techniek-video]")?.play().catch(() => {});
+      });
+    });
+    document.querySelectorAll<HTMLElement>("[data-techniek-dicht]").forEach((el) => {
+      el.addEventListener("click", sluitTechniek);
+    });
+
+    // Lopende rusttimer stoppen en video's pauzeren zodra je wegnavigeert
+    document.addEventListener(
+      "astro:before-swap",
+      () => {
+        stopRust();
+        document.querySelectorAll<HTMLVideoElement>("[data-techniek-video]").forEach((v) => v.pause());
+      },
+      { once: true },
+    );
     }
     document.addEventListener("astro:page-load", init);
   </script>

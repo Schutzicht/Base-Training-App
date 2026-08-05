@@ -183,6 +183,7 @@ export const OEFENING_SPIEREN: Record<string, { primair: string[]; secundair: st
   pushpress: { primair: ["front-delts"], secundair: ["side-delts", "triceps", "quads", "traps"] },
   goblet: { primair: ["quads"], secundair: ["glutes", "adductors", "abs", "upper-back"] },
   carry: { primair: ["forearms", "traps"], secundair: ["abs", "obliques", "glutes"] },
+  bike: { primair: ["quads"], secundair: ["hamstrings", "calves", "front-delts"] },
 };
 
 export type OefeningVerloop = { naam: string; eenheid: "kg" | "reps" | "sec"; punten: { datum: string; kg: number }[] };
